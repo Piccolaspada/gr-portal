@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>АТАМŪRA · Земельно-разрешительный отдел — Маршрут запуска</title>
+<style>
+  :root{
+    --bg:#EAEDF1;--panel:#FFFFFF;--head:#1F2A37;--head2:#28384A;
+    --ink:#1B2733;--ink2:#5A6B7B;--muted:#8B98A6;--line:#DCE2E8;--line2:#EAEEF2;
+    --blue:#2563B0;--blue-bg:#E9F1FB;--blue-d:#1B4E8E;
+    --green:#1F7A43;--green-bg:#E6F2EA;--amber:#9A6A12;--amber-bg:#FAF0DA;
+    --red:#C0392B;--red-bg:#FBEAE8;--wait:#1E6F94;--wait-bg:#E3F0F6;--gray:#6B7785;--gray-bg:#EEF1F4;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:13px;line-height:1.45}
+  .app{display:flex;min-height:100vh}
+  a{color:var(--blue);text-decoration:none}
+  /* SIDEBAR */
+  .sidebar{width:226px;background:var(--panel);border-right:1px solid var(--line);flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column}
+  .brand{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  .brand .mk{width:30px;height:30px;border-radius:6px;background:var(--head);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px}
+  .brand .bt{font-size:12.5px;font-weight:700;color:var(--ink);line-height:1.2}
+  .brand .bs{font-size:10.5px;color:var(--muted)}
+  .navgroup{padding:12px 10px 2px}
+  .navgroup .gt{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);padding:0 8px 6px;font-weight:700}
+  .nav-item{width:100%;text-align:left;padding:8px 12px;border-radius:6px;display:flex;align-items:center;gap:9px;cursor:pointer;color:var(--ink2);border:none;background:none;font-family:var(--sans);font-size:13px;border-left:3px solid transparent}
+  .nav-item:hover{background:var(--line2);color:var(--ink)}
+  .nav-item.active{background:var(--blue-bg);color:var(--blue-d);border-left-color:var(--blue);font-weight:600}
+  .nav-item svg{width:17px;height:17px;flex-shrink:0}
+  .nav-item .cnt{margin-left:auto;font-size:10.5px;background:var(--gray-bg);color:var(--gray);border-radius:10px;padding:0 7px;font-weight:700}
+  .nav-item.active .cnt{background:var(--blue);color:#fff}
+  .sb-foot{margin-top:auto;padding:12px 16px;border-top:1px solid var(--line);font-size:10.5px;color:var(--muted)}
+  /* MAIN */
+  .main{flex:1;min-width:0;display:flex;flex-direction:column}
+  .topbar{background:var(--panel);border-bottom:1px solid var(--line);padding:0 20px;height:50px;display:flex;align-items:center;gap:16px;position:sticky;top:0;z-index:20}
+  .crumb{font-size:13px;color:var(--ink2)}
+  .crumb b{color:var(--ink);font-weight:600}
+  .spacer{flex:1}
+  .search{display:flex;align-items:center;gap:7px;background:var(--gray-bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px;width:230px;color:var(--muted);font-size:12.5px}
+  .search svg{width:14px;height:14px}
+  .bell{position:relative;width:34px;height:34px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--ink2);cursor:pointer}
+  .bell:hover{background:var(--gray-bg)}
+  .bell .bd{position:absolute;top:4px;right:4px;background:var(--red);color:#fff;font-size:9px;font-weight:700;border-radius:8px;min-width:15px;height:15px;display:flex;align-items:center;justify-content:center;padding:0 3px}
+  .rolepick{display:flex;align-items:center;gap:8px}
+  .rolepick label{font-size:11px;color:var(--muted)}
+  select#role{font-family:var(--sans);font-size:12.5px;font-weight:600;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 9px;cursor:pointer}
+  .tag{font-size:10.5px;padding:3px 8px;border-radius:4px;background:var(--green-bg);color:var(--green);font-weight:600}
+  .tag.ro{background:var(--amber-bg);color:var(--amber)}
+  .infobar{background:var(--head);color:#D7DEE6;padding:7px 20px;font-size:12px;display:flex;gap:16px;align-items:center}
+  .infobar b{color:#F2C14E}.infobar .sep{color:#54616F}
+  .content{padding:18px 20px 50px}
+  h1.page{font-size:20px;font-weight:700;margin-bottom:2px}
+  .sub{color:var(--ink2);margin-bottom:16px;font-size:12.5px}
+  /* KPI */
+  .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:18px}
+  .kpi{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px;border-top:3px solid var(--blue)}
+  .kpi.g{border-top-color:var(--green)}.kpi.a{border-top-color:var(--amber)}.kpi.w{border-top-color:var(--wait)}.kpi.r{border-top-color:var(--red)}.kpi.m{border-top-color:var(--gray)}
+  .kpi .v{font-size:26px;font-weight:700;line-height:1}
+  .kpi .l{font-size:11px;color:var(--ink2);margin-top:5px;font-weight:600}
+  .kpi .h{font-size:11px;color:var(--muted);margin-top:1px}
+  /* PANEL + TABLE */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden;margin-bottom:18px}
+  .panel-h{padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;background:#F7F9FB}
+  .panel-h h2{font-size:12.5px;font-weight:700;color:var(--ink)}
+  .panel-h .r{margin-left:auto;font-size:11.5px;color:var(--ink2)}
+  .panel-h .r a{cursor:pointer}
+  table{width:100%;border-collapse:collapse}
+  th,td{padding:8px 12px;text-align:left;font-size:12.5px;border-bottom:1px solid var(--line2);vertical-align:middle}
+  th{background:#F7F9FB;font-size:10.5px;letter-spacing:.4px;text-transform:uppercase;color:var(--ink2);font-weight:700;position:sticky}
+  tbody tr:hover{background:#F9FBFC}
+  tr.clickable{cursor:pointer}
+  tr:last-child td{border-bottom:none}
+  td.num{font-variant-numeric:tabular-nums;color:var(--gray);font-weight:700;width:38px}
+  .grp td{background:#EEF2F6;font-weight:700;font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:var(--ink2);padding:7px 12px}
+  .muted{color:var(--muted)}.b{font-weight:600}
+  .colw{color:var(--ink2);font-size:11.5px}
+  /* badges */
+  .bdg{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;white-space:nowrap}
+  .bdg .d{width:6px;height:6px;border-radius:50%}
+  .b-done{background:var(--green-bg);color:var(--green)}.b-done .d{background:var(--green)}
+  .b-wait{background:var(--wait-bg);color:var(--wait)}.b-wait .d{background:var(--wait)}
+  .b-prog{background:var(--amber-bg);color:var(--amber)}.b-prog .d{background:var(--amber)}
+  .b-red{background:var(--red-bg);color:var(--red)}.b-red .d{background:var(--red)}
+  .b-idle{background:var(--gray-bg);color:var(--gray)}.b-idle .d{background:var(--gray)}
+  .pill{display:inline-block;font-size:11px;padding:2px 8px;border-radius:4px;background:var(--gray-bg);color:var(--ink2)}
+  .pill.blue{background:var(--blue-bg);color:var(--blue-d)}
+  .due{font-weight:600;font-variant-numeric:tabular-nums}
+  .due.over{color:var(--red)}.due.soon{color:var(--amber)}
+  .two{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
+  @media(max-width:900px){.two{grid-template-columns:1fr}}
+  /* feed */
+  .ev{padding:10px 14px;border-bottom:1px solid var(--line2)}
+  .ev:last-child{border:none}
+  .ev-top{display:flex;align-items:center;gap:8px;margin-bottom:3px}
+  .ev-type{font-size:10px;text-transform:uppercase;letter-spacing:.4px;font-weight:700;padding:1px 7px;border-radius:3px}
+  .et-decision{background:var(--amber-bg);color:var(--amber)}.et-change{background:var(--wait-bg);color:var(--wait)}.et-mention{background:var(--green-bg);color:var(--green)}
+  .vis{margin-left:auto;font-size:10px;text-transform:uppercase;letter-spacing:.3px;font-weight:700;padding:1px 7px;border-radius:3px}
+  .v-mgmt{background:var(--amber-bg);color:var(--amber)}.v-team{background:var(--wait-bg);color:var(--wait)}.v-pub{background:var(--green-bg);color:var(--green)}
+  .ev-body{font-size:12px;color:var(--ink)}
+  .ev-meta{font-size:11px;color:var(--muted);margin-top:3px}
+  .ment{color:var(--blue);font-weight:600}
+  /* kanban */
+  .kanban{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-items:start}
+  .kcol{background:var(--panel);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  .kcol-h{padding:8px 10px;background:#F7F9FB;border-bottom:1px solid var(--line);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);display:flex;justify-content:space-between}
+  .kcol-h .c{background:var(--gray-bg);border-radius:10px;padding:0 7px;color:var(--gray)}
+  .kbody{padding:8px}
+  .kcard{background:#fff;border:1px solid var(--line);border-left:3px solid var(--gray);border-radius:6px;padding:8px 10px;margin-bottom:7px;font-size:12px}
+  .kcard.done{border-left-color:var(--green)}.kcard.wait{border-left-color:var(--wait)}.kcard.prog{border-left-color:var(--amber)}.kcard.red{border-left-color:var(--red)}.kcard.idle{border-left-color:var(--gray)}
+  .kcard .kn{font-weight:600}.kcard .km{font-size:11px;color:var(--muted);margin-top:2px}
+  /* gantt */
+  .gantt-row{display:grid;grid-template-columns:210px 1fr;gap:10px;align-items:center;padding:4px 0}
+  .gantt-lbl{font-size:12px;color:var(--ink2)}.gantt-lbl b{color:var(--blue-d);margin-right:6px}
+  .gtrack{position:relative;height:20px;background:var(--gray-bg);border-radius:4px;border:1px solid var(--line2)}
+  .gbar{position:absolute;height:20px;border-radius:4px;font-size:10px;color:#fff;display:flex;align-items:center;padding:0 6px;overflow:hidden;top:-1px}
+  .gbar.done{background:var(--green)}.gbar.prog{background:var(--amber)}.gbar.wait{background:var(--wait)}.gbar.idle{background:#9AA7B4}.gbar.red{background:var(--red)}
+  .gtoday{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--red);z-index:3}
+  .gaxis{display:grid;grid-template-columns:210px 1fr;gap:10px;margin-bottom:6px}
+  .gaxis .mm{display:flex;justify-content:space-between;font-size:10px;color:var(--muted)}
+  /* doc check */
+  .dc{display:flex;align-items:center;gap:9px;padding:8px 14px;border-bottom:1px solid var(--line2);font-size:12.5px}
+  .dc:last-child{border:none}
+  .cb{width:15px;height:15px;border-radius:3px;border:2px solid var(--muted);flex-shrink:0}
+  .cb.on{background:var(--green);border-color:var(--green);position:relative}
+  .cb.on::after{content:'✓';color:#fff;font-size:10px;position:absolute;top:-3px;left:2px}
+  .code{font-weight:700;color:var(--blue-d);width:34px}
+  .note{background:var(--blue-bg);border:1px solid #CFE0F3;border-radius:6px;padding:9px 12px;font-size:12px;color:var(--blue-d);margin-bottom:14px}
+  .note.warn{background:var(--amber-bg);border-color:#EAD8AE;color:var(--amber)}
+  /* gdrive */
+  .gd{display:flex;align-items:center;gap:8px;font-size:12px;padding:6px 0;border-bottom:1px solid var(--line2)}
+  .gd:last-child{border:none}
+  .gd .ic{width:18px;height:18px}.gd .seen{margin-left:auto;font-size:10.5px;color:var(--muted)}
+  /* modal */
+  .modal-bg{display:none;position:fixed;inset:0;background:rgba(20,30,40,.5);z-index:50;align-items:flex-start;justify-content:center;padding:40px 20px;overflow:auto}
+  .modal-bg.open{display:flex}
+  .modal{background:var(--panel);border-radius:8px;max-width:620px;width:100%;box-shadow:0 16px 50px rgba(0,0,0,.3)}
+  .modal-h{background:var(--head);color:#fff;padding:14px 18px;border-radius:8px 8px 0 0;display:flex;align-items:flex-start;gap:10px}
+  .modal-h .mt{font-size:15px;font-weight:700}.modal-h .ms{font-size:11px;color:#AEBAC6;margin-top:2px}
+  .mclose{margin-left:auto;background:none;border:none;color:#AEBAC6;font-size:20px;cursor:pointer;line-height:1}
+  .modal-b{padding:16px 18px}
+  .modal-b h4{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--ink2);margin:14px 0 7px;font-weight:700}
+  .modal-b h4:first-child{margin-top:0}
+  .rtbl{width:100%;border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  .hint{font-size:11.5px;color:var(--muted);font-style:italic}
+  @media(max-width:820px){.kanban{grid-template-columns:1fr 1fr}.gantt-row,.gaxis{grid-template-columns:120px 1fr}.search{display:none}}
+  /* мой день */
+  .day-hi{margin-bottom:14px}
+  .day-sec{margin-bottom:16px}
+  .day-sec-h{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--ink2);padding:6px 0;display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--line);margin-bottom:8px}
+  .day-sec-h.over{color:var(--red);border-bottom-color:var(--red)}
+  .day-sec-h.today{color:var(--blue-d);border-bottom-color:var(--blue)}
+  .day-sec-h.week{color:var(--wait)}
+  .day-cnt{background:var(--gray-bg);border-radius:10px;padding:0 8px;font-size:11px}
+  .dcard{display:flex;align-items:center;gap:12px;background:var(--panel);border:1px solid var(--line);border-left:3px solid #9AA7B4;border-radius:7px;padding:10px 14px;margin-bottom:7px}
+  .dcard.over{border-left-color:var(--red)}.dcard.prog{border-left-color:var(--amber)}.dcard.wait{border-left-color:var(--wait)}.dcard.done{border-left-color:var(--green)}.dcard.idle{border-left-color:#9AA7B4}
+  .dc-l{flex-shrink:0}.dc-m{flex:1;min-width:0}
+  .dc-name{font-weight:600;font-size:13px}.dc-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+  .dc-r{text-align:right;flex-shrink:0}
+  .dc-rel{font-size:12px;font-weight:700;color:var(--ink2)}.dc-rel.over{color:var(--red)}.dc-rel.soon{color:var(--amber)}
+  .dc-date{font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+  /* flow (маршрут столбиками) */
+  .flow{display:flex;align-items:stretch;gap:0;overflow-x:auto;padding:6px 2px 16px}
+  .fcol{min-width:240px;max-width:240px;background:var(--panel);border:1px solid var(--line);border-top:3px solid #9AA7B4;border-radius:8px;display:flex;flex-direction:column;cursor:pointer;transition:.12s}
+  .fcol:hover{box-shadow:0 8px 20px rgba(30,42,51,.13);transform:translateY(-2px)}
+  .fcol.done{border-top-color:var(--green)}.fcol.prog{border-top-color:var(--amber)}.fcol.wait{border-top-color:var(--wait)}.fcol.red{border-top-color:var(--red)}.fcol.idle{border-top-color:#9AA7B4}
+  .fcol-h{padding:11px 12px;border-bottom:1px solid var(--line2)}
+  .fc-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;gap:6px}
+  .fc-no{font-size:11px;font-weight:700;color:var(--blue-d)}
+  .fc-name{font-size:13.5px;font-weight:700;line-height:1.25}
+  .fcol-body{padding:9px 12px;flex:1}
+  .fc-sub-h{font-size:9.5px;letter-spacing:.5px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:6px}
+  .fc-sub{display:flex;gap:7px;font-size:11.5px;color:var(--ink);padding:4px 0;border-bottom:1px dashed var(--line2)}
+  .fc-sub:last-child{border:none}
+  .fc-k{font-weight:700;color:var(--blue-d);flex-shrink:0;min-width:34px}
+  .fcol-foot{padding:8px 12px;border-top:1px solid var(--line2);background:#F7F9FB;border-radius:0 0 8px 8px}
+  .fc-meta{font-size:10.5px;color:var(--ink2);margin-top:2px}
+  .farrow{display:flex;align-items:center;justify-content:center;min-width:32px;color:var(--blue);font-size:20px;font-weight:700;flex-shrink:0}
+  .phase-band{min-width:56px;max-width:56px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;background:linear-gradient(180deg,var(--head),var(--head2));border-radius:8px;color:#fff;padding:12px 4px;margin:0 5px;flex-shrink:0}
+  .pb-no{font-size:16px;font-weight:700}
+  .pb-t{font-size:9.5px;color:#AEBAC6;writing-mode:vertical-rl;transform:rotate(180deg);margin-top:10px;letter-spacing:.5px;max-height:170px;overflow:hidden}
+  .flow-legend{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-top:6px;font-size:11px;color:var(--ink2)}
+  /* user box */
+  .userbox{display:flex;align-items:center;gap:9px}
+  .ub-av{width:30px;height:30px;border-radius:50%;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;flex-shrink:0}
+  .ub-info{display:flex;flex-direction:column;line-height:1.2}
+  .ub-fio{font-size:12.5px;font-weight:600;color:var(--ink)}
+  .logout{background:none;border:1px solid var(--line);color:var(--ink2);border-radius:6px;padding:6px 10px;font-size:12px;cursor:pointer;font-family:var(--sans)}
+  .logout:hover{background:var(--gray-bg);color:var(--ink)}
+  /* login */
+  .login-screen{position:fixed;inset:0;z-index:100;background:linear-gradient(135deg,#1F2A37,#28384A 60%,#1B4E8E);display:flex;align-items:center;justify-content:center;padding:20px;overflow:auto}
+  .login-card{background:var(--panel);border-radius:12px;padding:30px;width:100%;max-width:400px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+  .login-brand{display:flex;align-items:center;gap:11px;margin-bottom:22px}
+  .login-brand .mk{width:40px;height:40px;border-radius:8px;background:var(--head);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:20px}
+  .login-brand .lb-t{font-size:16px;font-weight:700;letter-spacing:.5px}
+  .login-brand .lb-s{font-size:11px;color:var(--muted)}
+  .login-title{font-size:19px;font-weight:700;margin-bottom:4px}
+  .login-hint{font-size:12px;color:var(--ink2);margin-bottom:18px}
+  .fld-l{display:block;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.4px;color:var(--ink2);margin-bottom:5px}
+  .fld{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:7px;font-size:13.5px;font-family:var(--sans);margin-bottom:14px;background:#fff;color:var(--ink)}
+  .fld:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px var(--blue-bg)}
+  .login-err{color:var(--red);font-size:12px;min-height:16px;margin-bottom:8px;font-weight:600}
+  .login-btn{width:100%;background:var(--blue);color:#fff;border:none;border-radius:7px;padding:11px;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--sans)}
+  .login-btn:hover{background:var(--blue-d)}
+  .demo-block{margin-top:20px;border-top:1px solid var(--line);padding-top:14px}
+  .demo-h{font-size:11px;color:var(--muted);margin-bottom:8px}
+  .demo-list{display:flex;flex-wrap:wrap;gap:6px}
+  .demo-chip{font-size:11px;background:var(--gray-bg);border:1px solid var(--line);border-radius:14px;padding:4px 10px;cursor:pointer;color:var(--ink2)}
+  .demo-chip:hover{background:var(--blue-bg);border-color:var(--blue);color:var(--blue-d)}
+</style>
+</head>
+<body>
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-brand"><div class="mk">Ā</div><div><div class="lb-t">ATAMŪRA</div><div class="lb-s">Земельно-разрешительный отдел · GR</div></div></div>
+    <div class="login-title">Вход в портал</div>
+    <div class="login-hint">У каждого сотрудника свой логин и пароль. Роль и доступы определяются учётной записью.</div>
+    <label class="fld-l">Логин</label>
+    <input class="fld" id="liLogin" type="text" autocomplete="username" placeholder="например, sabina" onkeydown="if(event.key==='Enter')doLogin()">
+    <label class="fld-l">Пароль</label>
+    <input class="fld" id="liPass" type="password" autocomplete="current-password" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()">
+    <div class="login-err" id="liErr"></div>
+    <button class="login-btn" onclick="doLogin()">Войти</button>
+    <div class="demo-block">
+      <div class="demo-h">Демо-доступы (нажмите, чтобы подставить):</div>
+      <div class="demo-list" id="demoList"></div>
+    </div>
+  </div>
+</div>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><div class="mk">Ā</div><div><div class="bt">ATAMŪRA · GR</div><div class="bs">Маршрут запуска</div></div></div>
+    <div id="nav"></div>
+    <div class="sb-foot">Прототип v3 · деловой режим<br>Пилот: ЖК Керуен 6</div>
+  </aside>
+  <div class="main">
+    <div class="topbar">
+      <div class="crumb" id="crumb"></div>
+      <div class="spacer"></div>
+      <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>Поиск по проектам…</div>
+      <div class="bell" title="Уведомления исполнителю и руководителю"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="bd" id="bell">0</span></div>
+      <div class="userbox">
+        <div class="ub-av" id="ubAv"></div>
+        <div class="ub-info"><span class="ub-fio" id="ubFio"></span><span class="tag" id="roleTag"></span></div>
+        <button class="logout" onclick="logout()" title="Сменить пользователя">Выход</button>
+      </div>
+    </div>
+    <div class="infobar">
+      <span>🎯 Стандарт запуска: <b>1 проект / месяц</b></span><span class="sep">|</span>
+      <span>сейчас ~8 мес <b>→</b> маршрут → конвейер</span><span class="sep">|</span>
+      <span>срез на <b>18.06.2026</b></span>
+    </div>
+    <div class="content" id="content"></div>
+  </div>
+</div>
+<div class="modal-bg" id="modalBg" onclick="if(event.target===this)closeModal()"><div class="modal" id="modal"></div></div>
+<script>
+const SREZ="18.06.2026", TODAY="18.06.2026";
+const ROLES={
+  coordinator:{name:"Координатор проекта",edit:true,tag:"правит всё",ro:false,sees:["pub","team","mgmt"],allTasks:true,nav:["myday","dash","route","gantt","kanban","mytasks","feed","docs","kjk","projects","roles"]},
+  grdir:{name:"Директор GR",edit:true,tag:"правит всё по GR",ro:false,sees:["pub","team","mgmt"],allTasks:true,nav:["myday","dash","route","gantt","kanban","mytasks","feed","docs","kjk","projects","roles"]},
+  manager:{name:"Менеджер проекта",edit:true,tag:"правит свои задачи",ro:false,sees:["pub","team"],nav:["myday","dash","route","gantt","kanban","mytasks","feed","docs","kjk","projects"]},
+  designer:{name:"Проектировщик",edit:true,tag:"правит свои задачи",ro:false,sees:["pub","team"],nav:["myday","route","mytasks","feed","docs"]},
+  lawyer:{name:"Юрист",edit:true,tag:"правит свои задачи",ro:false,sees:["pub","team"],nav:["myday","mytasks","feed","docs","kjk"]},
+  sales:{name:"Отдел продаж",edit:true,tag:"правит свои задачи",ro:false,sees:["pub","team"],nav:["myday","dash","mytasks","feed","projects"]},
+  site:{name:"Начальник участка",edit:true,tag:"правит свои задачи",ro:false,sees:["pub","team"],nav:["myday","route","mytasks","feed"]},
+  ceo:{name:"CEO",edit:false,tag:"только просмотр",ro:true,sees:["pub","mgmt"],nav:["dash","route","gantt","kanban","feed","projects","roles"]},
+  owner:{name:"Собственник",edit:false,tag:"только просмотр",ro:true,sees:["pub"],nav:["dash","route","gantt","projects"]}
+};
+let role="coordinator";
+const ICON={myday:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2" stroke-linecap="round"/>',dash:'<path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"/>',route:'<path d="M5 5h14M5 12h14M5 19h9" stroke-linecap="round"/>',gantt:'<path d="M4 5h8M4 10h13M4 15h6M4 20h10" stroke-linecap="round"/>',kanban:'<rect x="3" y="4" width="5" height="16"/><rect x="10" y="4" width="5" height="11"/><rect x="17" y="4" width="5" height="14"/>',mytasks:'<path d="M9 11l2 2 4-4M4 4h16v16H4z"/>',feed:'<path d="M4 6h16M4 12h16M4 18h10" stroke-linecap="round"/>',docs:'<path d="M6 2h9l5 5v15H6zM14 2v6h6"/>',kjk:'<path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/>',projects:'<path d="M3 21V8l9-5 9 5v13"/>',roles:'<circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><circle cx="17" cy="9" r="2"/>'};
+const LABEL={myday:"Мой день",dash:"Статус проектов",route:"Маршрут",gantt:"График (Гант)",kanban:"Канбан",mytasks:"Все мои задачи",feed:"Лента событий",docs:"Документы",kjk:"Гарантия КЖК",projects:"Проекты",roles:"Доступы и роли"};
+const NAVGROUPS=[{title:"Главное",items:["myday","dash"]},{title:"Запуск",items:["route","gantt","kanban"]},{title:"Работа",items:["mytasks","feed","docs","kjk"]},{title:"Справочники",items:["projects","roles"]}];
+const ASSIGNEE={coordinator:"Координатор",grdir:"Директор GR",manager:"Менеджер проекта",designer:"Проектировщик",lawyer:"Юрист",sales:"Отдел продаж",site:"Начальник участка"};
+const STAGES=[
+  {no:"1",name:"Земельный участок",phase:1,status:"done",owner:"Отдел GR · Учредитель",art:"Госакт на исходный участок",dep:"—",sla:"по решению",
+   roles:[["Учредитель","решение по участку"],["Отдел GR","получение госакта"]],docs:[["Госакт (исходный участок).pdf",1]],sub:[["1","Получение госакта на исходный участок"]]},
+  {no:"2",name:"ПДП",phase:1,status:"done",owner:"Отдел GR",art:"Проект детальной планировки",dep:"Этап 1",sla:"по ситуации",
+   roles:[["Отдел GR","анализ/изменение ПДП"],["Архитектор","заключение"]],docs:[["ПДП — анализ.pdf",1]],sub:[["а","Анализ существующего ПДП"],["б","При необходимости — изменение ПДП"]]},
+  {no:"3",name:"Сегментация участка",phase:1,status:"done",owner:"Проектировщики · Отдел GR",art:"Посадка + новые госакты (1→3)",dep:"Этап 2",sla:"~1 месяц",
+   roles:[["Проектировщик","посадка/сегментация"],["Ген. директор","согласование варианта"],["Отдел GR","раздел в госоргане"]],docs:[["Посадка v3.dwg",1],["Новые госакты (3 шт).pdf",1]],sub:[["3а","Документы от проектировщиков (посадка) — 1 нед"],["3б","Согласование с ген. директором — 1 день"],["3в","Раздел участка 1→3 госакта — 1 мес"]]},
+  {no:"4",name:"Целевое назначение",phase:1,status:"done",owner:"Отдел GR",art:"Договор изм. целевого назначения",dep:"Этап 3",sla:"~1 месяц",
+   roles:[["Отдел GR","договор"],["Финансы","оплата/рассрочка"]],docs:[["Договор целевого назначения.pdf",1]],sub:[["—","Единовременная оплата → документ об оплате"],["—","Рассрочка до 10 лет → договор рассрочки"]]},
+  {no:"5",name:"АПЗ + Технические условия",phase:2,status:"prog",owner:"Проектировщики · Отдел GR",art:"АПЗ + ТУ (эл-во, вода, газ)",dep:"Этап 4",sla:"АПЗ 5 р.д.",
+   roles:[["Проектировщик","расчёты, точки подключения"],["Отдел GR","подача/получение в госоргане"]],docs:[["АПЗ.pdf",1],["ТУ электричество.pdf",1],["ТУ вода.pdf",1],["ТУ газ — ожидается",0]],sub:[["5а","Проектировщики дают расчёты — 2 дня"],["5б","Отдел GR получает АПЗ — 5 р.д. ✅"],["5в","ТУ: эл-во ✅ · вода ✅ · газ ⏳"]]},
+  {no:"6",name:"Эскизный проект",phase:2,status:"done",owner:"Проектировщики · Отдел GR",art:"Согласованный эскизный проект",dep:"Этап 3 (парал.)",sla:"5 р.д.",
+   roles:[["Проектировщик","разработка"],["Архитектор","утверждение планировки"],["Отдел GR","согласование в госоргане"]],docs:[["Эскизный проект.pdf",1]],sub:[["6а","Подготовка (парал. с АПЗ)"],["6б","Согласование в госоргане — 5 р.д."]]},
+  {no:"7",name:"Рабочий проект + Экспертиза",phase:2,status:"wait",owner:"Проектировщики · куратор GR",art:"Рабочий проект + экспертиза",dep:"Этап 6",sla:"3 недели",
+   roles:[["Проектировщик","рабочий проект, ответы экспертизе"],["Куратор GR","контроль сроков"],["ГИП","главный инженер проекта"]],docs:[["Рабочий проект (основной).pdf",1],["Экспертиза — в процессе",0]],sub:[["1 нед","Загрузка документов в экспертизу"],["2–3 нед","Отработка замечаний"],["⏳","Ждём госорган — ETA 02.07, касание 25.06"]]},
+  {no:"8",name:"Талон на начало строительства",phase:2,status:"idle",owner:"Отдел GR",art:"Талон (гейт → ветки А/Б/В/Г)",dep:"Этап 7",sla:"1 день",
+   roles:[["Отдел GR","подача и получение талона"]],docs:[["Пакет на талон — собирается",0]],sub:[["—","Подача документов на талон"],["—","Получение талона → запуск 4 веток"]]},
+  {no:"А",name:"Ветка А · Строительство",phase:3,status:"idle",owner:"Отдел строительства",art:"Каркас · перегородки · фасады/окна/лифты",dep:"Талон",sla:"по графику",
+   roles:[["Начальник участка","отметки готовности"],["Стройка","СМР"]],docs:[],sub:[["А1","Начало стройки (триггер: талон)"],["А2","Каркас всех этажей → ветка В"],["А3","Перегородки → «Вызывай БТИ»"],["А4–А7","Замеры БТИ → сверка с ДДУ"]]},
+  {no:"Б",name:"Ветка Б · Гарантия КЖК",phase:3,status:"idle",owner:"Проект · Финансы · Юристы · GR",art:"Гарантия КЖК (homeportal.kz)",dep:"Талон",sla:"~2 месяца",
+   roles:[["Проектировщик","пакет П-1…6"],["Финансы","Ф-1…4"],["Юрист","Ю-1…8 (нотариально)"],["Отдел GR","подача на КЖК"]],docs:[],sub:[["П-1…6","Пакет проектного отдела"],["Ф-1…4","Финотчётность + аудит"],["Ю-1…8","Юр-пакет (нотариально)"],["⚖","Приказ МИИР РК №432"]]},
+  {no:"В",name:"Ветка В · Гарантия акимата",phase:3,status:"idle",owner:"Отдел GR",art:"Гарантия акимата (МИО) на каркас",dep:"Каркас готов (А2)",sla:"1 неделя",
+   roles:[["Отдел GR","подача в акимат"]],docs:[],sub:[["—","Подача документов в акимат"],["—","Получение гарантии на каркас"]]},
+  {no:"Г",name:"Ветка Г · ДДУ (Казреестр)",phase:3,status:"idle",owner:"Проектировщики · Продажи · GR · ОКС",art:"Зарегистрированные ДДУ",dep:"КЖК или акимат",sla:"10 р.д.",
+   roles:[["Проектировщик","пакет, корректировка АР"],["Отдел продаж","продажные площади +1,5%"],["Отдел GR","сверка, передача в ОКС"],["ОКС","регистрация ДДУ"]],docs:[],sub:[["⚖","Юр-гейт: продажи только после КЖК/акимата"],["Г2","Сверка площадей АР с продажными (+1,5%)"],["Г6","ОКС регистрирует объект — 10 р.д."],["Г9","Каждый ДДУ согласован с архитектурой"]]},
+  {no:"9",name:"Акт ввода в эксплуатацию",phase:4,status:"idle",owner:"Отдел GR",art:"Разрешения ГАСК + архитектура",dep:"Стройка завершена",sla:"3 р.д.",
+   roles:[["Начальник участка","готовность фасадов/окон/лифтов"],["Отдел GR","акт, декларация, сдача в ГАСК"]],docs:[],sub:[["Гейт","Фасады + окна + лифты готовы"],["9.1","Заполнение акта по замерам БТИ"],["9.2","Декларация: печати поставщиков ~2 нед"],["9.3–9.6","МГН · шумка · исполнит. схема · кадастр"],["9.7–9.8","Сдача в ГАСК и архитектуру → 3 р.д."]]},
+  {no:"10",name:"Присвоение адресов",phase:4,status:"idle",owner:"Отдел GR",art:"Адреса дому и квартирам",dep:"Этап 9",sla:"3 р.д.",
+   roles:[["Отдел GR","присвоение адресов"]],docs:[],sub:[["—","Присвоение адреса дому(-ам)"],["—","Присвоение адресов квартирам"]]},
+  {no:"11",name:"БТИ · черновые замеры",phase:4,status:"idle",owner:"Отдел GR",art:"Замеры площадей → сверка с ДДУ",dep:"Этап 10",sla:"1 неделя",
+   roles:[["Отдел GR","замеры БТИ"],["Отдел продаж","сверка с ДДУ"]],docs:[],sub:[["—","БТИ открывает ячейки по адресам"],["—","Черновые замеры площадей"],["Сверка",">1,5% — клиент доплачивает; <1,5% — корректируем"]]},
+  {no:"12",name:"Техпаспорта",phase:4,status:"idle",owner:"Отдел GR",art:"Техпаспорта (ЦОН) + реестр передачи в продажи",dep:"Этап 11",sla:"до 9 р.д.",
+   roles:[["Отдел GR","подача через ЦОН"],["Отдел продаж","приём по реестру передачи"]],docs:[],sub:[["12а","Общедомовой — первым, 2 нед"],["12б","Квартиры — 4 р.д. (парал.)"],["12в","Нежилые — 9 р.д. (парал.)"]]},
+  {no:"13",name:"Юстиция",phase:4,status:"idle",owner:"Отдел GR",art:"Свидетельства о праве собственности",dep:"Этап 12",sla:"5 р.д.",
+   roles:[["Отдел GR","регистрация права"]],docs:[],sub:[["—","Сдача документов на регистрацию"],["—","Получение свидетельств (Казреестр)"]]}
+];
+const PHASES={1:{t:"Фаза I — Земля и градостроительство",d:"Этапы 1–4"},2:{t:"Фаза II — Проектирование и разрешения",d:"Этапы 5–8"},3:{t:"Фаза III — Параллельные ветки после талона",d:"Стройка · КЖК · Акимат · ДДУ"},4:{t:"Фаза IV — Сдача и регистрация",d:"Этапы 9–13"}};
+const STM={done:["Готово","b-done"],wait:["Ждём госорган","b-wait"],prog:["В работе","b-prog"],red:["Красный флаг","b-red"],idle:["Не начато","b-idle"]};
+const CKP="Зарегистрированные права собственности дольщиков (юстиция). Ближайший гейт-ЦКП: талон → старт продаж после гарантии КЖК/акимата.";
+// Активные проекты со своими сроками (ДЕМО — заменить на актуальные статусы/даты)
+const APROJ=[
+  {name:"ЖК Керуен 6",phase:"Фаза II · Разрешения",stage:"Рабочий проект + Экспертиза",lead:"Баян",nextL:"Талон на строительство",next:"02.07.2026",status:"wait",blocker:"ТУ на газ"},
+  {name:"ЖК Discovery",phase:"Фаза I · Земля",stage:"Сегментация участка",lead:"Баян",nextL:"Согласование посадки",next:"22.06.2026",status:"prog",blocker:""},
+  {name:"Атмосфера 4 очередь",phase:"Фаза IV · Сдача",stage:"Акт ввода в эксплуатацию",lead:"Сабина",nextL:"Печати декларации",next:"28.06.2026",status:"prog",blocker:""},
+  {name:"Керуен 5 очередь",phase:"Фаза III · Гарантия",stage:"Гарантия КЖК",lead:"Гульнур",nextL:"Юр-пакет КЖК",next:"15.07.2026",status:"idle",blocker:""},
+  {name:"Aura 4",phase:"Фаза III · Гарантия",stage:"ДДУ (Казреестр)",lead:"Дима",nextL:"Сверка площадей",next:"10.07.2026",status:"idle",blocker:""}
+];
+function parseD(d){const a=d.split(".").map(Number);return new Date(a[2],a[1]-1,a[0]);}
+function daysTo(d){return Math.round((parseD(d)-new Date(2026,5,18))/86400000);}
+function relLabel(n){return n<0?`просрочено на ${-n} дн.`:n===0?"сегодня":n===1?"завтра":`через ${n} дн.`;}
+function curFio(){const e=document.getElementById("ubFio");return e&&e.textContent?e.textContent:ROLES[role].name;}
+const TASKS=[
+  {proj:"Керуен 6",name:"Этап 5в · Получить ТУ на газ (подрядчик затягивает)",who:"manager",due:"20.06.2026",status:"prog"},
+  {proj:"Discovery",name:"Этап 3б · Согласовать посадку с ген. директором",who:"grdir",due:"22.06.2026",status:"prog"},
+  {proj:"Керуен 6",name:"Этап 7 · Загрузить рабочий проект в экспертизу",who:"designer",due:"19.06.2026",status:"prog"},
+  {proj:"Керуен 6",name:"Этап 7 · Куратор: контроль ETA экспертизы (касание 25.06)",who:"grdir",due:"25.06.2026",status:"wait"},
+  {proj:"Керуен 6",name:"Этап 8 · Подготовить пакет документов на талон",who:"manager",due:"01.07.2026",status:"idle"},
+  {proj:"Керуен 6",name:"Ветка Б · Юр-пакет Ю-1…Ю-8 (нотариально)",who:"lawyer",due:"15.07.2026",status:"idle"},
+  {proj:"Керуен 6",name:"Ветка Г · Сверить площади АР с продажными (+1,5%)",who:"sales",due:"10.07.2026",status:"idle"},
+  {proj:"Атмосфера 4",name:"Этап 9 · Собрать печати декларации (поставщики)",who:"manager",due:"28.06.2026",status:"prog"},
+  {proj:"Атмосфера 4",name:"Ветка А · Подтвердить готовность фасадов/окон/лифтов",who:"site",due:"30.06.2026",status:"wait"},
+  {proj:"Керуен 6",name:"Координация: свести сроки фаз, снять блокер по газу",who:"coordinator",due:"19.06.2026",status:"prog"},
+  {proj:"Discovery",name:"Этап 6 · Утвердить планировку эскизного проекта",who:"designer",due:"24.06.2026",status:"idle"}
+];
+const FEED=[
+  {type:"decision",vis:"mgmt",who:"Тех-совет",date:"16.06.2026",body:"Решение по талону Керуен 6 зафиксировано: Руслан готовит финальный пакет. Под цель старта продаж определены уполномоченная компания, застройщик, генподрядчик."},
+  {type:"change",vis:"team",who:"Проектировщик",date:"15.06.2026",body:"Изменена планировка блока Б (Discovery) — версия 3. Прежняя версия сохранена в истории."},
+  {type:"mention",vis:"team",who:"Сабина",date:"17.06.2026",body:"<span class='ment'>@Дима (продажи)</span> сверить продажные площади Керуен 6 перед Казреестром — до 10.07."},
+  {type:"change",vis:"pub",who:"Система",date:"17.06.2026",body:"Сдвиг ETA талона Керуен 6: 02.07 (было 28.06) — ждём экспертизу рабочего проекта."},
+  {type:"decision",vis:"pub",who:"Собственник",date:"12.06.2026",body:"Пилот маршрута — Керуен 6. После отладки тиражируем как конвейер (цель: 1 проект/мес)."},
+  {type:"mention",vis:"mgmt",who:"Координатор",date:"15.06.2026",body:"<span class='ment'>@Сабина</span> бюджет на шумку +18% к прошлому проекту — финдиру; собственнику пока не показываем."}
+];
+const GANTT=[
+  {no:"1",name:"Земельный участок",s:0,d:2,status:"done"},{no:"2",name:"ПДП",s:2,d:2,status:"done"},{no:"3",name:"Сегментация",s:4,d:4,status:"done"},{no:"4",name:"Целевое назначение",s:8,d:4,status:"done"},{no:"5",name:"АПЗ + ТУ",s:12,d:3,status:"prog"},{no:"6",name:"Эскизный проект",s:13,d:2,status:"done"},{no:"7",name:"Рабочий проект + Эксп.",s:15,d:3,status:"wait"},{no:"8",name:"Талон",s:18,d:1,status:"idle"},{no:"А",name:"Строительство",s:19,d:21,status:"idle"},{no:"Б",name:"Гарантия КЖК",s:19,d:8,status:"idle"},{no:"В",name:"Гарантия акимата",s:28,d:2,status:"idle"},{no:"Г",name:"ДДУ (Казреестр)",s:30,d:4,status:"idle"},{no:"9",name:"Акт ввода",s:40,d:3,status:"idle"},{no:"10",name:"Адреса",s:43,d:1,status:"idle"},{no:"11",name:"БТИ",s:44,d:1,status:"idle"},{no:"12",name:"Техпаспорта",s:45,d:2,status:"idle"},{no:"13",name:"Юстиция",s:47,d:1,status:"idle"}
+];
+const GTODAY=17;
+const PORTFOLIO=[
+  {group:"На маршруте / в работе",items:["Южный","Бескайнар","Арлан","Atakent (Карабулак)","Atameken (Панфилова 6 га)","Замантас","Discovery","Атмосфера 5","Атмосфера 2","Парк","Школа Атмо 3","Aura 9 блок","Olympic Village (Kemertogan)","Next City","Bravo","Alatau Resort 52 га (таунхаусы)","Alatau Resort 35 га (малоэтажные 3+1)","Neo City","Жаналык / Жана-арна","Бесагаш Монетка","Starlight (Казакова)","Atlas (53 га)","Сектор 7","Бегалина 48","Байтасова (1/2 дома)","Оспанова","Парковки Керуен"]},
+  {group:"Акт ввода в эксплуатацию",items:["Атмосфера 4 очередь","Керуен 2 очередь","Aura 2 (3, 4 блоки)","Керуен 3 очередь","Атмосфера 5 очередь","Атмосфера 6 очередь","Атмосфера 7 очередь","Завод"]},
+  {group:"На гарантии",items:["Aura 4","Discovery","Atakent (Карабулак)","Atameken (Панфилова 6 га)","Aqsai Resort 1","Керуен 1 очередь","Керуен 4 очередь","Aura 3","Керуен 5 очередь","Керуен 6 очередь","Керуен 7 очередь","Керуен 8 очередь"]},
+  {group:"Новые проекты",items:["Вилла Дулати / ЖК Феличита","Discovery Аппарты","Discovery Retail (внутри ЖК)","Discovery Aparts","Alatau Commercial","Discovery Commercial Park","Discovery Park","Neo City Commercial","Atameken Commercial","МЦ Керуен","Aura Commercial","БЦ Бегалина","БЦ Baitas","LandMark (Бельбулак)","Liberty (Еркин)","Gravity School","Gravity Park","Gravity BoxPark","Neo City Apartments","Next City Factory","Alatau Phystech","Atlas Park (53 га)","Titan Factory","Titan Industrial Park (10 га)","Cronos Industrial Park (27 га, Сектор 7)","Atakent School","Atakent Center","ТРЦ Керуен","Отель Оспанова","ТЦ Атмосфера","Панфилов ТЦ/МЦ"]}
+];
+function ptype(n){const s=n.toLowerCase();
+  if(/factory|industrial|завод|phystech|titan|cronos/.test(s))return["Промышленный","#7A6A55"];
+  if(/school|школа/.test(s))return["Соцобъект","#1E6F94"];
+  if(/commercial|commerical|retail|\bбц\b|\bтц\b|\bтрц\b|\bмц\b|отель|apart|аппарт|апарт/.test(s))return["Коммерция","#9A6A12"];
+  return["Жилой","#1F7A43"];}
+
+let currentView="dash";
+function badge(st){return `<span class="bdg ${STM[st][1]}"><span class="d"></span>${STM[st][0]}</span>`;}
+function count(st){return STAGES.filter(s=>s.status===st).length;}
+function dueClass(d){const[dd,mm,yy]=d.split(".").map(Number);const due=new Date(yy,mm-1,dd);const t=new Date(2026,5,18);
+  if(due<t)return"over";if((due-t)/86400000<=4)return"soon";return"";}
+function visTasks(R){return R.ro?[]:(R.allTasks?TASKS:TASKS.filter(t=>t.who===role));}
+
+function setRole(r){role=r;const R=ROLES[r];
+  document.getElementById("roleTag").textContent=R.tag;
+  document.getElementById("roleTag").className="tag"+(R.ro?" ro":"");
+  if(!R.nav.includes(currentView))currentView=R.nav[0];
+  const due=visTasks(R).filter(t=>["over","soon"].includes(dueClass(t.due))).length;
+  document.getElementById("bell").textContent=due;
+  renderNav();render();}
+function renderNav(){const R=ROLES[role];
+  let h="";
+  NAVGROUPS.forEach(g=>{const items=g.items.filter(i=>R.nav.includes(i));if(!items.length)return;
+    h+=`<div class="navgroup"><div class="gt">${g.title}</div>`+items.map(id=>{
+      let cnt="";if(id==="mytasks"){const n=visTasks(R).length;if(n)cnt=`<span class="cnt">${n}</span>`;}
+      return `<button class="nav-item ${id===currentView?'active':''}" onclick="go('${id}')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">${ICON[id]}</svg>${LABEL[id]}${cnt}</button>`;
+    }).join("")+`</div>`;});
+  document.getElementById("nav").innerHTML=h;}
+function go(v){currentView=v;renderNav();render();window.scrollTo(0,0);}
+function render(){const R=ROLES[role];
+  document.getElementById("crumb").innerHTML=`Маршрут запуска <span class="muted">/</span> <b>${LABEL[currentView]}</b>`;
+  const map={myday:viewMyDay,dash:viewDash,route:viewRoute,gantt:viewGantt,kanban:viewKanban,mytasks:viewMyTasks,feed:viewFeed,docs:viewDocs,kjk:viewKjk,projects:viewProjects,roles:viewRoles};
+  document.getElementById("content").innerHTML=(map[currentView]||viewDash)(R);}
+
+function viewMyDay(R){
+  const fio=curFio();const dateStr="четверг, 18 июня 2026";
+  if(R.ro){
+    const visFeed=FEED.filter(f=>R.sees.includes(f.vis)).slice(0,4);
+    return `<div class="day-hi"><div><h1 class="page">Добрый день, ${fio.split("—")[0].trim()}</h1><div class="sub" style="margin:0">Сегодня ${dateStr} · режим наблюдателя</div></div></div>
+    <div class="note">У вашей роли нет персональных задач. Ниже — что важно по проектам сегодня и последние события.</div>
+    ${aprojBoard(R)}
+    <div class="panel" style="margin-top:18px"><div class="panel-h"><h2>Последние события</h2><span class="r"><a onclick="go('feed')">лента →</a></span></div>${visFeed.map(evRow).join("")||'<div style="padding:14px" class="muted">Нет записей.</div>'}</div>`;
+  }
+  const list=visTasks(R).slice().sort((a,b)=>daysTo(a.due)-daysTo(b.due));
+  const over=list.filter(t=>daysTo(t.due)<0);
+  const today=list.filter(t=>daysTo(t.due)===0);
+  const week=list.filter(t=>{const n=daysTo(t.due);return n>=1&&n<=7;});
+  const later=list.filter(t=>daysTo(t.due)>7);
+  const projs=[...new Set(list.map(t=>t.proj))];
+  function sect(title,arr,cls){if(!arr.length)return"";
+    return `<div class="day-sec"><div class="day-sec-h ${cls}">${title} <span class="day-cnt">${arr.length}</span></div>${arr.map(dayCard).join("")}</div>`;}
+  return `<div class="day-hi"><div><h1 class="page">Добрый день, ${fio.split("—")[0].trim()}</h1><div class="sub" style="margin:0">Сегодня ${dateStr}. Ваши задачи на сегодня и ближайшие дни — обновляются автоматически.</div></div></div>
+  <div class="kpis">
+    <div class="kpi r"><div class="v">${over.length}</div><div class="l">Просрочено</div><div class="h">требует внимания</div></div>
+    <div class="kpi a"><div class="v">${today.length}</div><div class="l">На сегодня</div><div class="h">${dateStr.split(",")[1]}</div></div>
+    <div class="kpi w"><div class="v">${week.length}</div><div class="l">На неделе</div><div class="h">ближайшие 7 дней</div></div>
+    <div class="kpi"><div class="v">${projs.length}</div><div class="l">Моих проектов</div><div class="h">${projs.join(", ")||"—"}</div></div>
+  </div>
+  ${list.length?`${sect("⚠ Просрочено",over,"over")}${sect("Сегодня",today,"today")}${sect("На этой неделе",week,"week")}${sect("Позже",later,"later")}`:`<div class="panel"><div style="padding:26px;text-align:center" class="muted">На ближайшее время задач нет 🎉</div></div>`}
+  ${R.edit?`<div class="note" style="margin-top:6px">По каждой задаче: принять · отметить выполненной · вернуть · прикрепить документ. Уведомления о сроках приходят вам и руководителю автоматически.</div>`:""}`;
+}
+function dayCard(t){const n=daysTo(t.due);const dc=n<0?"over":n<=4?"soon":"";
+  return `<div class="dcard ${dc==='over'?'over':t.status}"><div class="dc-l"><span class="bdg ${STM[t.status][1]}"><span class="d"></span>${STM[t.status][0]}</span></div>
+    <div class="dc-m"><div class="dc-name">${t.name}</div><div class="dc-sub">📁 ${t.proj}</div></div>
+    <div class="dc-r"><div class="dc-rel ${dc}">${relLabel(n)}</div><div class="dc-date">${t.due}</div></div></div>`;}
+function aprojBoard(R){
+  return `<div class="panel"><div class="panel-h"><h2>Статус проектов · ближайшие даты</h2><span class="r">${APROJ.length} активных</span></div>
+  <table><thead><tr><th>Проект</th><th>Этап</th><th>Ответственный</th><th>Ближайшая дата</th><th>Статус</th></tr></thead><tbody>
+  ${APROJ.map(p=>{const n=daysTo(p.next);const dc=n<0?"over":n<=4?"soon":"";return `<tr><td class="b">${p.name}${p.blocker?` <span class="bdg b-red"><span class="d"></span>${p.blocker}</span>`:''}<div class="muted" style="font-weight:400">${p.phase}</div></td><td class="colw">${p.stage}</td><td class="colw">${p.lead}</td><td><span class="due ${dc}">${p.nextL}</span><div class="muted">${p.next} · ${relLabel(n)}</div></td><td>${badge(p.status)}</td></tr>`;}).join("")}
+  </tbody></table></div>`;
+}
+function viewDash(R){
+  return `<h1 class="page">Статус проектов</h1><div class="sub">Где находится каждый проект, кто ведёт и какая ближайшая дата. Срез на ${SREZ}.</div>
+  <div class="kpis">
+    <div class="kpi"><div class="v">${APROJ.length}</div><div class="l">Активных проектов</div><div class="h">в работе сейчас</div></div>
+    <div class="kpi a"><div class="v">${APROJ.filter(p=>p.status==='prog').length}</div><div class="l">В работе</div></div>
+    <div class="kpi w"><div class="v">${APROJ.filter(p=>p.status==='wait').length}</div><div class="l">Ждём госорган</div></div>
+    <div class="kpi r"><div class="v">${APROJ.filter(p=>p.blocker).length}</div><div class="l">С блокером</div><div class="h">нужно вмешательство</div></div>
+  </div>
+  ${aprojBoard(R)}
+  <div class="note">Пилот маршрута — <b>ЖК Керуен 6</b>. Детально по этапам: <a onclick="go('route')">Маршрут →</a> · <a onclick="go('gantt')">График →</a></div>`;
+}
+function evRow(f){const tc={decision:"et-decision",change:"et-change",mention:"et-mention"}[f.type];const tl={decision:"Решение",change:"Изменение",mention:"Упоминание"}[f.type];
+  const vc={mgmt:"v-mgmt",team:"v-team",pub:"v-pub"}[f.vis];const vl={mgmt:"Рук-во",team:"Команда",pub:"Все"}[f.vis];
+  return `<div class="ev"><div class="ev-top"><span class="ev-type ${tc}">${tl}</span><span class="vis ${vc}">${vl}</span></div><div class="ev-body">${f.body}</div><div class="ev-meta">${f.who} · ${f.date}</div></div>`;}
+
+function fcol(s){const i=STAGES.indexOf(s);
+  return `<div class="fcol ${s.status}" onclick="openStage(${i})">
+    <div class="fcol-h"><div class="fc-top"><span class="fc-no">Этап ${s.no}</span>${badge(s.status)}</div><div class="fc-name">${s.name}</div></div>
+    <div class="fcol-body"><div class="fc-sub-h">Под-задачи</div>${s.sub.map(x=>`<div class="fc-sub"><span class="fc-k">${x[0]}</span><span>${x[1]}</span></div>`).join("")}</div>
+    <div class="fcol-foot"><div class="fc-meta">👥 ${s.roles.map(r=>r[0]).join(", ")}</div><div class="fc-meta">⏱ ${s.sla} · 📎 ${s.docs.length} док.</div></div>
+  </div>`;}
+function viewRoute(R){
+  const roman={1:"I",2:"II",3:"III",4:"IV"};
+  let html=`<h1 class="page">Маршрут запуска · ЖК Керуен 6</h1><div class="sub">Сквозная схема: этап → под-задачи под ним → стрелка к следующему этапу. Прокрутка вправо. Клик по этапу — подробности.</div><div class="flow">`;
+  let prev=null;
+  STAGES.forEach(s=>{
+    if(s.phase!==prev){html+=`<div class="phase-band"><div class="pb-no">${roman[s.phase]}</div><div class="pb-t">${PHASES[s.phase].t.split("—")[1].trim()}</div></div>`;prev=s.phase;}
+    else{html+=`<div class="farrow">${s.phase===3?'∥':'→'}</div>`;}
+    html+=fcol(s);
+  });
+  html+=`</div>
+  <div class="flow-legend"><span class="bdg b-done"><span class="d"></span>Готово</span><span class="bdg b-prog"><span class="d"></span>В работе</span><span class="bdg b-wait"><span class="d"></span>Ждём</span><span class="bdg b-idle"><span class="d"></span>Не начато</span><span class="muted">→ последовательно · ∥ параллельные ветки после талона</span></div>`;
+  return html;
+}
+function gdRow(d){const ok=d[1];
+  return `<div class="gd"><svg class="ic" viewBox="0 0 24 24"><path fill="#1F7A43" d="M7.7 3.5l-5.2 9 2.6 4.5h10.4l-2.6-4.5z" opacity="${ok?1:.3}"/><path fill="#9A6A12" d="M16.3 3.5H7.7l5.2 9h8.6z" opacity="${ok?1:.3}"/></svg>${ok?`<a href="#" onclick="return false">${d[0]}</a>`:`<span class="muted">${d[0]}</span>`}<span class="seen">${ok?'видят: GR · смежные отделы · руководитель':'не загружен'}</span></div>`;}
+function openStage(idx){const s=STAGES[idx];const R=ROLES[role];
+  let b=`<div class="modal-h"><div><div class="mt">Этап ${s.no}. ${s.name}</div><div class="ms">${PHASES[s.phase].t}</div></div><button class="mclose" onclick="closeModal()">×</button></div>
+  <div class="modal-b">
+    <div style="margin-bottom:10px">${badge(s.status)} &nbsp;<span class="pill">${s.owner}</span></div>
+    <h4>Артефакт · ЦКП этапа</h4><div>${s.art}</div>
+    <h4>Зависит от · срок</h4><div>${s.dep} · ${s.sla}</div>
+    <h4>Роли и зоны ответственности</h4>
+    <table class="rtbl"><thead><tr><th>Роль</th><th>Зона ответственности</th></tr></thead><tbody>${s.roles.map(r=>`<tr><td class="b">${r[0]}</td><td class="colw">${r[1]}</td></tr>`).join("")}</tbody></table>
+    <h4>Под-шаги</h4><table class="rtbl"><tbody>${s.sub.map(x=>`<tr><td class="b" style="width:80px;color:var(--blue-d)">${x[0]}</td><td>${x[1]}</td></tr>`).join("")}</tbody></table>
+    <h4>Документы (Google Drive — загружаются один раз)</h4>${s.docs.length?s.docs.map(gdRow).join(""):'<div class="hint">Документы появятся на этом этапе.</div>'}
+    ${R.edit?`<h4>Действия</h4><div class="hint">Сменить статус · назначить ответственного · выставить ETA · загрузить документ · @-упомянуть. Изменения логируются в Ленту.</div>`:`<div class="hint" style="margin-top:14px">Режим просмотра — изменение этапа недоступно для роли «${R.name}».</div>`}
+  </div>`;
+  document.getElementById("modal").innerHTML=b;document.getElementById("modalBg").classList.add("open");}
+function closeModal(){document.getElementById("modalBg").classList.remove("open");}
+
+function viewMyTasks(R){
+  if(R.ro){const over=TASKS.filter(t=>dueClass(t.due)==="over").length;
+    return `<h1 class="page">Задачи команды</h1><div class="note">Роль «${R.name}» — наблюдатель, персональных задач нет. Всего активных задач: ${TASKS.length}, просрочено: ${over}.</div>${tasksTable(TASKS,true)}`;}
+  const list=visTasks(R);const over=list.filter(t=>dueClass(t.due)==="over").length;
+  return `<h1 class="page">Мои задачи</h1><div class="sub">${R.allTasks?'Все задачи команды по проектам.':'Что мне нужно сделать и к какому сроку.'} Сегодня: ${TODAY}.</div>
+  <div class="kpis"><div class="kpi"><div class="v">${list.length}</div><div class="l">Активных задач</div></div>
+  <div class="kpi r"><div class="v">${over}</div><div class="l">Просрочено</div></div>
+  <div class="kpi m"><div class="v" style="font-size:15px">${R.name}</div><div class="l">Текущая роль</div></div></div>
+  ${tasksTable(list,R.allTasks)}
+  ${R.edit?`<div class="note" style="margin-top:14px">Доступно: принять · вернуть · комментировать · прикрепить документ. Уведомления приходят исполнителю и руководителю.</div>`:""}`;
+}
+function tasksTable(list,showWho){
+  if(!list.length)return `<div class="panel"><div style="padding:14px" class="muted">Активных задач нет.</div></div>`;
+  return `<div class="panel"><table><thead><tr><th>Задача</th><th>Проект</th>${showWho?'<th>Ответственный</th>':''}<th>Срок</th><th>Статус</th></tr></thead><tbody>
+  ${list.map(t=>{const dc=dueClass(t.due);return `<tr><td class="b">${t.name}</td><td class="colw">${t.proj}</td>${showWho?`<td><span class="pill blue">${ASSIGNEE[t.who]}</span></td>`:''}<td class="due ${dc}">${t.due}</td><td>${badge(t.status)}</td></tr>`;}).join("")}
+  </tbody></table></div>`;
+}
+function viewGantt(R){const W=48;
+  let rows=GANTT.map(g=>{const left=g.s/W*100,width=g.d/W*100;
+    return `<div class="gantt-row"><div class="gantt-lbl"><b>${g.no}</b>${g.name}</div><div class="gtrack"><div class="gbar ${g.status}" style="left:${left}%;width:${width}%">${STM[g.status][0]}</div></div></div>`;}).join("");
+  return `<h1 class="page">График проекта (Гант) · ЖК Керуен 6</h1><div class="sub">Где проект сейчас по времени. Красная линия — сегодня (${TODAY}).</div>
+  <div class="panel"><div class="panel-h"><h2>Таймлайн этапов</h2><span class="r">шкала ~48 недель</span></div><div style="padding:14px 16px">
+    <div class="gaxis"><div></div><div class="mm"><span>старт</span><span>+3 мес</span><span>+6 мес</span><span>+9 мес</span><span>сдача</span></div></div>
+    <div style="position:relative"><div class="gtoday" style="left:calc(210px + 10px + ${GTODAY/W} * (100% - 220px))"></div>${rows}</div>
+  </div></div>
+  <div class="note">Сейчас активен <b>Этап 7 (Рабочий проект + Экспертиза)</b> — критический путь к талону. Ветки А/Б/В/Г стартуют после талона параллельно.</div>`;
+}
+function viewKanban(R){const cols=[["idle","Не начато"],["prog","В работе"],["wait","Ждём госорган"],["red","Красный флаг"],["done","Готово"]];
+  let h=`<h1 class="page">Канбан этапов</h1><div class="sub">Эскалация: 3 р.д. → напоминание · 5 р.д. → +Отдел GR · 7 р.д. → ген. директор · &gt;2 нед → красный флаг.</div><div class="kanban">`;
+  cols.forEach(([st,lbl])=>{const items=STAGES.filter(s=>s.status===st);
+    h+=`<div class="kcol"><div class="kcol-h">${lbl}<span class="c">${items.length}</span></div><div class="kbody">${items.map(s=>`<div class="kcard ${st}" style="cursor:pointer" onclick="openStage(${STAGES.indexOf(s)})"><div class="kn">${s.no}. ${s.name}</div><div class="km">${s.owner}</div><div class="km">⏱ ${s.sla}</div></div>`).join("")||'<div class="km muted" style="padding:4px">—</div>'}</div></div>`;});
+  return h+`</div>`;
+}
+function viewFeed(R){const vis=FEED.filter(f=>R.sees.includes(f.vis));
+  return `<h1 class="page">Лента событий проекта</h1><div class="sub">Решения тех-совета, изменения и @-упоминания фиксируются здесь — вместо переписок в чатах.</div>
+  ${R.ro?`<div class="note">Роль «${R.name}»: видны записи уровня ${role==='ceo'?'«Все» и «Рук-во»':'«Все»'}.</div>`:""}
+  <div class="panel">${vis.map(evRow).join("")||'<div style="padding:14px" class="muted">Нет записей для вашей роли.</div>'}</div>`;
+}
+function viewDocs(R){
+  const f=[["Госакты / Исходный участок","Этап 1",1],["ПДП","Этап 2",1],["Сегментация","Этап 3",2],["Целевое назначение","Этап 4",1],["АПЗ","Этап 5",1],["Технические условия","Этап 5",2],["Эскизный проект","Этап 6",1],["Рабочий проект + Экспертиза","Этап 7",1],["Талон","Этап 8",0],["Гарантия акимата","Ветка В",0],["ДДУ (Казреестр)","Ветка Г",0],["Акт ввода в эксплуатацию","Этап 9",0],["Техпаспорта + реестр передачи","Этап 12",0]];
+  return `<h1 class="page">Документы</h1><div class="sub">Папки на Google Drive по этапам. Документ загружается один раз — его видят смежные отделы и руководитель (без пересылок в чатах). Версии фиксируются с датой и автором.</div>
+  <div class="panel"><table><thead><tr><th>Папка</th><th>Этап</th><th>Хранилище</th><th>Статус</th></tr></thead><tbody>
+  ${f.map(x=>`<tr><td class="b">${x[0]}</td><td class="colw">${x[1]}</td><td><span class="pill">Google Drive</span></td><td>${x[2]?`<span class="pill blue">${x[2]} файл(ов)</span>`:'<span class="muted">ожидается</span>'}</td></tr>`).join("")}
+  </tbody></table></div>`;
+}
+function viewKjk(R){
+  return `<h1 class="page">Гарантия КЖК · Ветка Б</h1><div class="sub">Подача онлайн через homeportal.kz · Приказ МИИР РК №432. Триггер: все три пакета загружены → «Можно подавать на КЖК».</div>
+  ${kjkTbl("Проектный отдел","",[["П-1","Рабочий проект (основной)",1],["П-2","Экспертиза рабочего проекта",0],["П-3","Смета рабочего проекта",0],["П-4","Экспертиза сметы",0],["П-5","Рабочий проект на наружные сети",0],["П-6","Экспертиза наружных сетей",0]])}
+  ${kjkTbl("Финансовый отдел","капитал «+» 2 года · заём/собств ≤ 7 · опыт ≥ 3 лет и 9 000 м²",[["Ф-1","Финотчётность застройщика (1 год)",0],["Ф-2","Финотчётность уполн. компании (1 год)",0],["Ф-3","Аудит застройщика (2 года)",0],["Ф-4","Аудит уполн. компании (2 года)",0]])}
+  ${kjkTbl("Юридический отдел","нотариально заверенные",[["Ю-1","Договор купли-продажи на участок",0],["Ю-2","Госакт на участок",0],["Ю-3","Приказ на директора застройщика",0],["Ю-4","Приказ на директора уполн. компании",0],["Ю-5","Устав застройщика",0],["Ю-6","Устав уполн. компании",0],["Ю-7","Свидетельство о госрегистрации застройщика",0],["Ю-8","Свидетельство о госрегистрации уполн. компании",0]])}`;
+}
+function kjkTbl(title,note,items){
+  return `<div class="panel"><div class="panel-h"><h2>${title}</h2>${note?`<span class="r">${note}</span>`:''}</div>
+  ${items.map(i=>`<div class="dc"><span class="cb ${i[2]?'on':''}"></span><span class="code">${i[0]}</span><span>${i[1]}</span></div>`).join("")}</div>`;
+}
+function viewProjects(R){
+  const total=PORTFOLIO.reduce((a,g)=>a+g.items.length,0);
+  let h=`<h1 class="page">Проекты</h1><div class="sub">Портфель запусков · ${total} проектов. Пилот маршрута — ЖК Керуен 6.</div>
+  <div class="note"><b>ЦКП пилота:</b> ${CKP}</div>`;
+  PORTFOLIO.forEach(g=>{h+=`<div class="panel"><div class="panel-h"><h2>${g.group}</h2><span class="r">${g.items.length}</span></div>
+    <table><thead><tr><th>Проект</th><th>Тип</th></tr></thead><tbody>
+    ${g.items.map(n=>{const t=ptype(n);const pilot=/^керуен 6 очередь$/i.test(n);
+      return `<tr><td class="b">${n}${pilot?' <span class="pill blue">пилот</span>':''}</td><td><span class="bdg" style="background:${t[1]}1A;color:${t[1]}"><span class="d" style="background:${t[1]}"></span>${t[0]}</span></td></tr>`;}).join("")}
+    </tbody></table></div>`;});
+  return h;
+}
+function viewRoles(R){
+  const rows=[["Координатор проекта","Всё, все проекты","Всё","Все уровни"],["Директор GR","Всё по GR, все проекты","Всё по GR","Все уровни"],["Менеджер проекта","Свои проекты и маршрут","Свои задачи","Команда + все"],["Проектировщик","Свои задачи, маршрут, документы","Свои задачи","Команда + все"],["Юрист","Свои задачи, пакет КЖК, документы","Свои задачи","Команда + все"],["Отдел продаж","Статус проектов, свои задачи","Свои задачи","Команда + все"],["Начальник участка","Свои задачи, ветка стройки","Свои задачи","Команда + все"],["CEO","Сводка, статусы, блокеры","— просмотр","Рук-во + все"],["Собственник","Высокоуровневый срез, сроки","— просмотр","Только «Все»"]];
+  return `<h1 class="page">Доступы и роли</h1><div class="sub">Каждый входит под своим логином. Координатор видит и правит всё. Смежные отделы видят статус по своим зонам.</div>
+  <div class="panel"><table><thead><tr><th>Роль / отдел</th><th>Видит</th><th>Правит</th><th>События</th></tr></thead><tbody>
+  ${rows.map(r=>`<tr><td class="b">${r[0]}</td><td class="colw">${r[1]}</td><td>${r[2].startsWith('—')?`<span class="muted">${r[2]}</span>`:`<span class="pill blue">${r[2]}</span>`}</td><td class="colw">${r[3]}</td></tr>`).join("")}
+  </tbody></table></div>
+  <div class="note">Уровни событий в Ленте: <b>Все</b> — видят все · <b>Команда</b> — сотрудники и руководство (не собственник/CEO) · <b>Рук-во</b> — Директор GR и координатор, скрыто от сотрудников.</div>`;
+}
+const USERS={
+  daniyar:{pass:"owner2026",role:"owner",fio:"Данияр — Учредитель"},
+  sabina:{pass:"gr2026",role:"grdir",fio:"Сабина — Директор GR"},
+  aigerim:{pass:"coord2026",role:"coordinator",fio:"Айгерим — Координатор"},
+  bayan:{pass:"pm2026",role:"manager",fio:"Баян — Менеджер проекта"},
+  aidos:{pass:"proj2026",role:"designer",fio:"Айдос — Проектировщик"},
+  gulnur:{pass:"law2026",role:"lawyer",fio:"Гульнур — Юрист"},
+  dima:{pass:"sale2026",role:"sales",fio:"Дима — Отдел продаж"},
+  andrey:{pass:"site2026",role:"site",fio:"Начальник участка"},
+  ceo:{pass:"ceo2026",role:"ceo",fio:"CEO"}
+};
+function initials(f){const w=f.replace(/—.*/,'').trim().split(/\s+/);return (w[0]||'').slice(0,1).toUpperCase()+((w[1]||'').slice(0,1).toUpperCase());}
+function doLogin(){
+  const l=(document.getElementById("liLogin").value||"").trim().toLowerCase();
+  const p=(document.getElementById("liPass").value||"").trim();
+  const u=USERS[l];
+  if(!u||u.pass!==p){document.getElementById("liErr").textContent="Неверный логин или пароль";return;}
+  document.getElementById("liErr").textContent="";
+  document.getElementById("ubFio").textContent=u.fio;
+  document.getElementById("ubAv").textContent=initials(u.fio);
+  document.getElementById("loginScreen").style.display="none";
+  currentView=ROLES[u.role].nav[0];
+  setRole(u.role);
+}
+function logout(){
+  document.getElementById("liLogin").value="";document.getElementById("liPass").value="";
+  document.getElementById("liErr").textContent="";
+  document.getElementById("loginScreen").style.display="flex";
+}
+function fillDemo(l){document.getElementById("liLogin").value=l;document.getElementById("liPass").value=USERS[l].pass;}
+document.getElementById("demoList").innerHTML=Object.keys(USERS).map(l=>`<span class="demo-chip" onclick="fillDemo('${l}')">${l}</span>`).join("");
+</script>
+</body>
+</html>
+<!-- ATAMURA GR portal v3 -->
+
