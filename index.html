@@ -156,6 +156,19 @@ select,input.fld{font-family:var(--sans);font-size:12.5px;border:1px solid var(-
 .lc .le{color:var(--red);font-size:12px;margin-top:9px;min-height:16px}
 .lc .lf{font-size:11px;color:var(--mut);margin-top:14px;line-height:1.5}
 @media(max-width:720px){.sb{position:fixed;left:-230px}.wrap{padding:15px}}
+.greet{background:linear-gradient(135deg,#15467f,#2563B0);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(37,99,176,.18)}
+.greet h1{font-size:22px;margin:0 0 3px;color:#fff;letter-spacing:-.3px}
+.greet p{font-size:13px;color:#d9e8f8;margin:0;text-transform:capitalize}
+.kpi{transition:transform .12s,box-shadow .12s}.kpi:hover{transform:translateY(-2px);box-shadow:0 7px 20px rgba(20,30,40,.09)}
+.ring{width:44px;height:44px;flex-shrink:0}
+.dist{display:flex;height:34px;border-radius:9px;overflow:hidden;border:1px solid var(--line)}
+.dist span{display:flex;align-items:center;justify-content:center;font-size:11.5px;font-weight:700;color:#fff;min-width:22px}
+.distleg{display:flex;flex-wrap:wrap;gap:13px;margin-top:10px;font-size:11.5px;color:var(--ink2)}
+.distleg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:middle}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.th{font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:13px 0 3px}
+.th:first-child{margin-top:4px}
+.pc-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style></head>
 <body>
 <div class="login" id="login"><div class="lc">
@@ -347,35 +360,46 @@ function badge(st){return '<span class="bdg '+STM[st][1]+'"><span class="d"></sp
 function esc(s){return (s||'').replace(/'/g,"\\'").replace(/"/g,'&quot;')}
 function stepBar(p){let h='<div class="steps">';for(let i=1;i<=6;i++){let c='step';if(i<p.s)c+=' done';else if(i===p.s)c+=(p.st==='wait'?' curw':' cur');h+='<div class="'+c+'" title="'+STEPS[i-1][0]+'"></div>';}return h+'</div>';}
 function pct(p){return Math.round((p.s-1)/6*100 + (p.st==='done'?Math.round(100/6):0))}
-function pcard(p){return '<div class="pc" onclick="openProj('+p.id+')"><div class="pc-top"><div><div class="pc-nm">'+p.n+'</div><div class="pc-too">'+TOOS[p.too].nm+'</div></div>'+badge(p.st)+'</div>'+stepBar(p)+'<div class="pc-meta"><span><b>Шаг '+p.s+'/6</b> · '+STEPS[p.s-1][0]+'</span><span class="muted">👤 '+p.lead+'</span></div>'+(p.note?'<div class="pc-note">'+p.note+'</div>':'')+'</div>';}
+function ring(p){const v=pct(p),r=18,c=2*Math.PI*r,off=c*(1-v/100);const col=p.st==='wait'?'var(--wait)':p.st==='done'?'var(--grn)':p.st==='idle'?'var(--gray)':'var(--amb)';
+  return '<svg class="ring" viewBox="0 0 44 44"><circle cx="22" cy="22" r="18" fill="none" stroke="var(--line2)" stroke-width="5"/><circle cx="22" cy="22" r="18" fill="none" stroke="'+col+'" stroke-width="5" stroke-linecap="round" stroke-dasharray="'+c+'" stroke-dashoffset="'+off+'" transform="rotate(-90 22 22)"/><text x="22" y="26" text-anchor="middle" font-size="12" font-weight="800" fill="var(--ink)">'+p.s+'</text></svg>';}
+const DCOLS=['#8B98A6','#2563B0','#1E6F94','#9A6A12','#7A6A55','#1F7A43'];
+function stepDist(list){const cnt=[0,0,0,0,0,0];list.forEach(p=>cnt[p.s-1]++);
+  return '<div class="dist">'+cnt.map((n,i)=>n?'<span style="flex:'+n+';background:'+DCOLS[i]+'" title="'+STEPS[i][0]+': '+n+'">'+n+'</span>':'').join('')+'</div><div class="distleg">'+STEPS.map((s,i)=>'<span><i style="background:'+DCOLS[i]+'"></i>'+s[0]+' · '+cnt[i]+'</span>').join('')+'</div>';}
+function pcard(p){return '<div class="pc" onclick="openProj('+p.id+')"><div class="pc-top"><div style="flex:1;min-width:0"><div class="pc-nm">'+p.n+'</div><div class="pc-too">'+TOOS[p.too].nm+'</div></div>'+ring(p)+'</div><div class="row" style="gap:6px;margin:6px 0 2px">'+badge(p.st)+'<span class="pill">'+STEPS[p.s-1][0]+'</span></div>'+stepBar(p)+'<div class="pc-meta"><span class="muted">👤 '+p.lead+'</span><span class="muted">Шаг '+p.s+'/6</span></div>'+(p.note?'<div class="pc-note">'+p.note+'</div>':'')+'</div>';}
 function myProjects(){if(MGMT.includes(ME.r)||ME.r==='sales')return PROJECTS;return PROJECTS.filter(p=>leadRole(p.lead)===ME.r);}
 /* ===== ГЛАВНАЯ (исполнитель) ===== */
-function viewHome(){const mt=myTasks();const mp=myProjects();const first=mt.split?0:0;
-  const over=mt.filter(t=>t.st==='wait').length;
-  let h='<h1 class="pg">Здравствуйте, '+curName().split(' ')[0]+'</h1><div class="sub">Ваш экран исполнителя: что нужно сделать, ваши проекты и быстрая загрузка документов.</div>';
-  h+='<div class="kpis"><div class="kpi"><div class="v">'+mt.length+'</div><div class="l">Мои задачи</div></div><div class="kpi a"><div class="v">'+mt.filter(t=>t.st==='prog').length+'</div><div class="l">В работе</div></div><div class="kpi w"><div class="v">'+over+'</div><div class="l">Ждём госорган</div></div><div class="kpi g"><div class="v">'+mp.length+'</div><div class="l">Мои проекты</div></div></div>';
-  // tasks
-  h+='<div class="card"><div class="card-h"><h2>Мои задачи</h2><span class="r">'+mt.length+'</span></div><div class="card-b" style="padding:6px 16px">';
-  h+=(mt.length?mt.map(t=>'<div class="doc" style="cursor:pointer" onclick="openTask('+t.id+')"><div style="flex:1"><div class="b">'+t.name+'</div><div class="muted" style="font-size:11px">📁 '+t.proj+' · '+t.dept+' · 👤 '+t.exec+'</div></div>'+badge(t.st)+'<button class="btn sm" onclick="event.stopPropagation();openTask('+t.id+')">Открыть</button></div>').join(''):'<div class="muted" style="padding:10px 0">Активных задач нет.</div>');
+function taskRow(t){return '<div class="doc" style="cursor:pointer" onclick="openTask('+t.id+')"><div style="flex:1;min-width:0"><div class="b">'+t.name+'</div><div class="muted" style="font-size:11px">📁 '+t.proj+' · '+t.dept+' · 👤 '+t.exec+'</div></div>'+badge(t.st)+'<button class="btn sm" onclick="event.stopPropagation();openTask('+t.id+')">Открыть</button></div>';}
+function viewHome(){const mt=myTasks();const mp=myProjects();
+  const byp=mt.filter(t=>t.st==='prog'),byw=mt.filter(t=>t.st==='wait'),byi=mt.filter(t=>t.st==='idle'||t.st==='done');
+  const dn=new Date().toLocaleDateString('ru-RU',{weekday:'long',day:'numeric',month:'long'});
+  let h='<div class="greet"><h1>Здравствуйте, '+curName().split(' ')[0]+'!</h1><p>'+dn+' · '+ROLES[ME.r].nm+'</p></div>';
+  h+='<div class="kpis"><div class="kpi a"><div class="v">'+mt.length+'</div><div class="l">Мои задачи</div></div><div class="kpi"><div class="v">'+byp.length+'</div><div class="l">В работе</div></div><div class="kpi w"><div class="v">'+byw.length+'</div><div class="l">Ждём госорган</div></div><div class="kpi g"><div class="v">'+mp.length+'</div><div class="l">Мои проекты</div></div></div>';
+  h+='<div class="card"><div class="card-h"><h2>Портфель по шагам маршрута</h2><span class="r">'+mp.length+' проектов</span></div><div class="card-b">'+stepDist(mp)+'</div></div>';
+  h+='<div class="card"><div class="card-h"><h2>Мои задачи</h2><span class="r">'+mt.length+'</span></div><div class="card-b" style="padding:8px 16px">';
+  if(!mt.length)h+='<div class="muted" style="padding:8px 0">Активных задач нет.</div>';
+  [['В работе',byp],['Ждём госорган',byw],['Не начато / прочее',byi]].forEach(g=>{if(!g[1].length)return;h+='<div class="th">'+g[0]+' · '+g[1].length+'</div>'+g[1].map(taskRow).join('');});
   h+='</div></div>';
-  // quick upload
-  h+='<div class="card"><div class="card-h"><h2>Быстрая загрузка документа</h2><span class="r">в общий Google Drive</span></div><div class="card-b">'+driveBar()+
-   '<div class="row"><select id="quP" class="fld" style="flex:1;min-width:160px">'+PROJECTS.map(p=>'<option value="'+p.id+'">'+p.n+'</option>').join('')+'</select>'+
-   '<select id="quC" class="fld">'+docCats(PROJECTS[0]).map(c=>'<option>'+c.c+'</option>').join('')+'</select>'+
-   '<button class="btn pri" onclick="quickUp()">📎 Загрузить</button></div>'+
-   '<div class="hint" style="margin-top:10px">Выберите проект и категорию — файл загрузится в общий Диск и станет виден смежным отделам. Скачать можно там же в карточке проекта.</div></div></div>';
-  // my projects
-  h+='<div class="card-h" style="background:none;border:none;padding:4px 0"><h2>Мои проекты</h2></div><div class="grid g3">'+(mp.length?mp.slice(0,9).map(pcard).join(''):'<div class="muted">Проектов нет.</div>')+'</div>';
-  if(mp.length>9)h+='<div style="margin-top:10px"><a onclick="go(\'projects\')">Все проекты ('+mp.length+') →</a></div>';
+  h+='<div class="card"><div class="card-h"><h2>Быстрая загрузка документа</h2><span class="r">в общий Google Drive</span></div><div class="card-b">'+driveBar()+'<div class="row"><select id="quP" class="fld" style="flex:1;min-width:160px">'+PROJECTS.map(p=>'<option value="'+p.id+'">'+p.n+'</option>').join('')+'</select><select id="quC" class="fld">'+docCats(PROJECTS[0]).map(c=>'<option>'+c.c+'</option>').join('')+'</select><button class="btn pri" onclick="quickUp()">📎 Загрузить</button></div><div class="hint" style="margin-top:10px">Выберите проект и категорию — файл загрузится в общий Диск и станет виден смежным отделам.</div></div></div>';
+  h+='<div class="row" style="justify-content:space-between;margin:8px 0 10px"><h2 style="font-size:15px">Мои проекты</h2>'+(mp.length>6?'<a onclick="go(\'projects\')">Все ('+mp.length+') →</a>':'')+'</div><div class="grid g3">'+(mp.length?mp.slice(0,6).map(pcard).join(''):'<div class="muted">Проектов нет.</div>')+'</div>';
   return h;
 }
 function quickUp(){const pid=+document.getElementById('quP').value;const cat=document.getElementById('quC').value;pickUpload(pid,cat);}
 /* ===== ПРОЕКТЫ ===== */
-let typeF='Все';
-function viewProjects(){let h='<h1 class="pg">Проекты</h1><div class="sub">Весь портфель — '+PROJECTS.length+' проектов с реальными статусами. Клик — открыть карточку.</div>';
+let typeF='Все',pStep='Все',pSort='step',pView='cards';
+function setPStep(v){pStep=v;render();}
+function setPSort(v){pSort=v;render();}
+function setPView(v){pView=v;render();}
+function projList(){let l=PROJECTS.slice();if(typeF!=='Все')l=l.filter(p=>p.g===typeF);if(pStep!=='Все')l=l.filter(p=>p.s===+pStep);
+  if(pSort==='name')l.sort((a,b)=>a.n.localeCompare(b.n,'ru'));else if(pSort==='state'){const o={wait:0,prog:1,idle:2,done:3};l.sort((a,b)=>(o[a.st]-o[b.st]));}else l.sort((a,b)=>b.s-a.s);return l;}
+function viewProjects(){const l=projList();
+  let h='<h1 class="pg">Проекты</h1><div class="sub">Весь портфель — '+PROJECTS.length+' проектов с реальными статусами из таблицы. Фильтр по шагу, сортировка и вид списка/карточек.</div>';
   h+='<div class="tabs">'+['Все','Маршрут','Гарантия','Сдача','Новые'].map(g=>'<button class="tab '+(typeF===g?'on':'')+'" onclick="setTF(\''+g+'\')">'+g+'<span class="c">'+(g==='Все'?PROJECTS.length:PROJECTS.filter(p=>p.g===g).length)+'</span></button>').join('')+'</div>';
-  GROUPS.forEach(gr=>{if(typeF!=='Все'&&typeF!==gr[0])return;const ps=PROJECTS.filter(p=>p.g===gr[0]);if(!ps.length)return;
-    h+='<div class="gh">'+gr[0]+'<span class="c">'+ps.length+' · '+gr[1]+'</span></div><div class="grid g3">'+ps.map(pcard).join('')+'</div>';});
+  h+='<div class="toolbar"><select class="fld" onchange="setPStep(this.value)"><option value="Все"'+(pStep==='Все'?' selected':'')+'>Все шаги</option>'+STEPS.map((s,i)=>'<option value="'+(i+1)+'"'+(pStep==(i+1)?' selected':'')+'>Шаг '+(i+1)+' · '+s[0]+'</option>').join('')+'</select>';
+  h+='<select class="fld" onchange="setPSort(this.value)"><option value="step"'+(pSort==='step'?' selected':'')+'>Сортировка: по шагу</option><option value="name"'+(pSort==='name'?' selected':'')+'>по названию</option><option value="state"'+(pSort==='state'?' selected':'')+'>по статусу</option></select>';
+  h+='<span style="flex:1"></span><button class="tab '+(pView==='cards'?'on':'')+'" onclick="setPView(\'cards\')">Карточки</button><button class="tab '+(pView==='list'?'on':'')+'" onclick="setPView(\'list\')">Список</button></div>';
+  h+='<div class="muted" style="font-size:12px;margin-bottom:10px">Найдено: '+l.length+'</div>';
+  if(pView==='list')h+='<div class="card"><table><thead><tr><th>Проект</th><th>ТОО</th><th>Шаг</th><th>Ведёт</th><th>Статус</th></tr></thead><tbody>'+l.map(p=>'<tr class="clk" onclick="openProj('+p.id+')"><td class="b">'+p.n+'</td><td class="muted">'+TOOS[p.too].nm.replace('ТОО ','')+'</td><td>Шаг '+p.s+' · '+STEPS[p.s-1][0]+'</td><td>'+p.lead+'</td><td>'+badge(p.st)+'</td></tr>').join('')+'</tbody></table></div>';
+  else h+='<div class="grid g3">'+(l.length?l.map(pcard).join(''):'<div class="muted">Ничего не найдено.</div>')+'</div>';
   return h;
 }
 function setTF(t){typeF=t;render();}
