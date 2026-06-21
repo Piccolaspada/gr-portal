@@ -155,7 +155,7 @@ select,input.fld{font-family:var(--sans);font-size:12.5px;border:1px solid var(-
 .lc .lb{width:100%;margin-top:18px;background:var(--blue);color:#fff;border:none;border-radius:9px;padding:12px;font-size:14px;font-weight:700;cursor:pointer}
 .lc .le{color:var(--red);font-size:12px;margin-top:9px;min-height:16px}
 .lc .lf{font-size:11px;color:var(--mut);margin-top:14px;line-height:1.5}
-@media(max-width:720px){.sb{position:fixed;left:-230px}.wrap{padding:15px}}
+@media(max-width:760px){.sb{position:fixed;left:-240px;z-index:95;transition:left .22s;box-shadow:0 0 40px rgba(0,0,0,.35)}.app.sbopen .sb{left:0}.app.sbopen .sbov{display:block;position:fixed;inset:0;background:rgba(16,24,38,.45);z-index:90}.burger{display:block}.wrap{padding:14px}.search input{width:140px}.kpis{grid-template-columns:repeat(2,1fr)}.g3,.g2{grid-template-columns:1fr}}
 .greet{background:linear-gradient(135deg,#15467f,#2563B0);color:#fff;border-radius:14px;padding:18px 22px;margin-bottom:18px;box-shadow:0 6px 20px rgba(37,99,176,.18)}
 .greet h1{font-size:22px;margin:0 0 3px;color:#fff;letter-spacing:-.3px}
 .greet p{font-size:13px;color:#d9e8f8;margin:0;text-transform:capitalize}
@@ -169,6 +169,16 @@ select,input.fld{font-family:var(--sans);font-size:12.5px;border:1px solid var(-
 .th{font-size:10.5px;font-weight:700;color:var(--mut);text-transform:uppercase;letter-spacing:.5px;margin:13px 0 3px}
 .th:first-child{margin-top:4px}
 .pc-nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.burger{display:none;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;font-size:17px;cursor:pointer;color:var(--ink2);line-height:1}
+.sbov{display:none}
+.nextact{background:linear-gradient(135deg,#fff,#eef5ff);border:1px solid #cfe0f3;border-left:4px solid var(--blue);border-radius:12px;padding:13px 16px;margin-bottom:16px}
+.na-l{font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--blue);font-weight:700}
+.na-t{font-size:14.5px;font-weight:600;margin:3px 0;line-height:1.4}
+.na-m{font-size:12px;color:var(--ink2)}
+.docgrp{border:1px solid var(--line2);border-radius:11px;padding:11px 13px;margin-bottom:11px}
+.docgrp-h{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px}
+.pbar{height:7px;background:var(--grayb);border-radius:5px;overflow:hidden;border:1px solid var(--line2);margin-bottom:7px}
+.pbar span{display:block;height:100%;background:linear-gradient(90deg,var(--grn),#2faf63)}
 </style></head>
 <body>
 <div class="login" id="login"><div class="lc">
@@ -186,9 +196,10 @@ select,input.fld{font-family:var(--sans);font-size:12.5px;border:1px solid var(-
     <div class="nav" id="nav"></div>
     <div class="sb-foot">Единый маршрут: земля → техпаспорта.<br>После сдачи — КСК / Atamura Comfort.</div>
   </aside>
+  <div class="sbov" onclick="toggleSb()"></div>
   <div class="main">
     <div class="top">
-      <div class="crumb" id="crumb"></div>
+      <button class="burger" onclick="toggleSb()">☰</button><div class="crumb" id="crumb"></div>
       <div class="search"><input id="sIn" placeholder="Поиск проекта…" autocomplete="off" oninput="searchP(this.value)" onblur="setTimeout(()=>cl('sdd'),200)"><div class="sdd" id="sdd"></div></div>
       <div class="bell" onclick="toggleN(event)"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8a6 6 0 10-12 0c0 7-3 8-3 8h18s-3-1-3-8"/><path d="M13.7 21a2 2 0 01-3.4 0"/></svg><span class="bd" id="bell">0</span><div class="ndd" id="ndd" onclick="event.stopPropagation()"></div></div>
     </div>
@@ -405,40 +416,37 @@ function viewProjects(){const l=projList();
 function setTF(t){typeF=t;render();}
 /* ===== КАРТОЧКА ПРОЕКТА ===== */
 let curProj=0;
-function openProj(id){curProj=id;view='project';cl('mbg');renderNav();render();window.scrollTo(0,0);}
+function openProj(id){curProj=id;view='project';cl('mbg');closeSb();renderNav();render();window.scrollTo(0,0);}
 const DEPNEXT={1:["Проектирование","посадка, ЭП, рабочий проект, ТУ"],2:["Отдел GR","подача АПЗ/ТУ, талон"],3:["Стройка","СМР, каркас"],4:["Юристы · Финансы","КЖК: Ю-1…8, Ф-1…4"],5:["Продажи · ОКС","сверка площадей, регистрация ДДУ"],6:["КСК / Atamura Comfort","эксплуатация, передача жителям"]};
-function viewProject(){const p=P(curProj);const cats=docCats(p);const can=ME.r!=='sales';
-  let h='<div class="row" style="justify-content:space-between;margin-bottom:6px"><h1 class="pg">'+p.n+'</h1><select class="fld" onchange="openProj(+this.value)">'+PROJECTS.map(x=>'<option value="'+x.id+'" '+(x.id===curProj?'selected':'')+'>'+x.n+'</option>').join('')+'</select></div>';
-  h+='<div class="row" style="margin-bottom:14px">'+badge(p.st)+'<span class="pill b">Шаг '+p.s+'/6 · '+STEPS[p.s-1][0]+'</span><span class="pill">'+TOOS[p.too].nm+'</span><span class="pill">👤 '+p.lead+'</span><span class="pill">'+p.g+'</span></div>';
-  if(p.note)h+='<div class="note">📌 <b>Текущий статус:</b> '+p.note+'</div>';
-  // milestone flow (единый маршрут)
+function viewProject(){const p=P(curProj);const cats=docCats(p);const can=ME.r!=='sales';const dn=DEPNEXT[p.s];
+  const dg=cats.reduce((a,c)=>a+c.items.filter(x=>x[1]).length,0),dt=cats.reduce((a,c)=>a+c.items.length,0);
+  let h='<div class="row" style="justify-content:space-between;gap:10px;margin-bottom:10px"><div class="row" style="gap:12px;min-width:0">'+ring(p)+'<div style="min-width:0"><h1 class="pg" style="margin:0">'+p.n+'</h1><div class="muted" style="font-size:12px">'+TOOS[p.too].nm+' · 👤 '+p.lead+'</div></div></div><select class="fld" onchange="openProj(+this.value)">'+PROJECTS.map(x=>'<option value="'+x.id+'" '+(x.id===curProj?'selected':'')+'>'+x.n+'</option>').join('')+'</select></div>';
+  h+='<div class="row" style="margin-bottom:12px">'+badge(p.st)+'<span class="pill b">Шаг '+p.s+'/6 · '+STEPS[p.s-1][0]+'</span><span class="pill">'+p.g+'</span></div>';
+  if(p.note)h+='<div class="nextact"><div class="na-l">Следующее действие</div><div class="na-t">'+p.note+'</div><div class="na-m">Ответственный: <b>'+p.lead+'</b> · '+p.dept+'</div></div>';
   h+='<div class="card"><div class="card-h"><h2>Единый маршрут — 6 шагов</h2><span class="r">земля → техпаспорта</span></div><div class="card-b"><div class="flow">';
   STEPS.forEach((s,i)=>{const n=i+1;let c='mscard';if(n<p.s)c+=' done';else if(n===p.s)c+=(p.st==='wait'?' wait':' prog')+' cur';
     h+='<div class="'+c+'"><div class="no">Шаг '+n+'</div><div class="nm">'+s[0]+'</div><div class="su">'+s[1]+'</div></div>'+(n<6?'<div class="arr">'+(n>=4&&n<=5?'∥':'→')+'</div>':'');});
   h+='</div></div></div>';
-  // connection between depts
-  const dn=DEPNEXT[p.s];
-  h+='<div class="card"><div class="card-h"><h2>Связь отделов на этом шаге</h2><span class="r">кто подключён</span></div><div class="card-b"><div class="row"><span class="pill b">Сейчас: '+p.dept+'</span><span class="arr">→</span><span class="pill">Дальше: '+dn[0]+'</span></div><div class="muted" style="font-size:12px;margin-top:7px">Передаёт дальше: '+dn[1]+'. Полная карта — раздел «Связь отделов».</div></div></div>';
-  // documents
-  h+='<div class="card"><div class="card-h"><h2>Документы проекта</h2><span class="r">'+(can?'скачать / загрузить':'просмотр статуса')+'</span></div><div class="card-b">'+driveBar();
-  cats.forEach(c=>{const u=ups(p.id,c.c);const g=c.items.filter(x=>x[1]).length;
-    h+='<div class="gh" style="margin:10px 0 4px">'+c.ic+' '+c.c+'<span class="c">'+g+'/'+c.items.length+'</span> <button class="btn sm" onclick="pickUpload('+p.id+',\''+esc(c.c)+'\')">📎 Загрузить</button></div>';
+  h+='<div class="card"><div class="card-h"><h2>Связь отделов на этом шаге</h2><span class="r">кто подключён</span></div><div class="card-b"><div class="row"><span class="pill b">Сейчас: '+p.dept+'</span><span class="arr">→</span><span class="pill">Дальше: '+dn[0]+'</span></div><div class="muted" style="font-size:12px;margin-top:7px">Передаёт дальше: '+dn[1]+'. Полная карта — <a onclick="go(\'deps\')">Связь отделов</a>.</div></div></div>';
+  h+='<div class="card"><div class="card-h"><h2>Документы проекта</h2><span class="r">получено '+dg+'/'+dt+' · '+(can?'скачать / загрузить':'просмотр')+'</span></div><div class="card-b">'+driveBar();
+  cats.forEach(c=>{const u=ups(p.id,c.c);const g=c.items.filter(x=>x[1]).length;const pc=Math.round(g/c.items.length*100);
+    h+='<div class="docgrp"><div class="docgrp-h"><div class="row" style="gap:8px"><b>'+c.ic+' '+c.c+'</b><span class="muted" style="font-size:11px">'+g+'/'+c.items.length+'</span></div>'+(can?'<button class="btn sm" onclick="pickUpload('+p.id+',\''+esc(c.c)+'\')">📎 Загрузить</button>':'')+'</div><div class="pbar"><span style="width:'+pc+'%"></span></div>';
     h+=c.items.map(it=>docRow(p.id,it[0],it[1],can)).join('');
     h+=u.map(f=>'<div class="doc"><svg class="ic" viewBox="0 0 24 24"><path fill="#1F7A43" d="M7.7 3.5l-5.2 9 2.6 4.5h10.4l-2.6-4.5z"/><path fill="#9A6A12" d="M16.3 3.5H7.7l5.2 9h8.6z"/></svg><div class="nm">'+f.name+'</div><span class="seen">загружено вами</span><button class="btn sm" onclick="dlFile(\''+esc(f.name)+'\',\''+f.url+'\')">Скачать</button></div>').join('');
-  });
+    h+='</div>';});
   h+='</div></div>';
-  // timeline
   h+='<div class="card"><div class="card-h"><h2>План документов — когда получим · кому передаём</h2></div><div class="card-b">'+KEYDOCS.map(d=>{const ok=dready(p,d.s)||p.s>d.s;return '<div class="tl-row '+(ok?'ok':'')+'"><div class="tl-dot"></div><div class="tl-p">'+d.pr+'</div><div class="tl-l">'+d.l+'</div><div class="tl-to">Можно передать: <b>'+d.to+'</b> · '+(ok?'получено':'ожидается')+'</div></div>';}).join('')+'</div></div>';
   return h;
 }
 function docRow(pid,label,ok,can){return '<div class="doc"><svg class="ic" viewBox="0 0 24 24"><path fill="#1F7A43" d="M7.7 3.5l-5.2 9 2.6 4.5h10.4l-2.6-4.5z" opacity="'+(ok?1:.3)+'"/><path fill="#9A6A12" d="M16.3 3.5H7.7l5.2 9h8.6z" opacity="'+(ok?1:.3)+'"/></svg><div class="nm '+(ok?'':'off')+'">'+label+'</div><span class="seen">'+(ok?'получено':'ожидается')+'</span>'+(ok&&can?'<button class="btn sm" onclick="dlFile(\''+esc(label)+'.pdf\')">Скачать</button>':(can?'<button class="btn sm" onclick="pickUpload('+pid+',\'Документы\')">Загрузить</button>':''))+'</div>';}
 /* ===== ДОКУМЕНТЫ (все проекты подряд) ===== */
-function viewDocs(){let h='<h1 class="pg">Документы по проектам</h1><div class="sub">Все проекты подряд. Документы — в общем Google Drive, один профиль. Скачивайте и загружайте сами, без запроса к координатору.</div>'+driveBar();
-  h+='<div class="card"><table><thead><tr><th>Проект</th><th>ТОО</th><th>Шаг</th><th>Готово док.</th><th>Статус</th><th></th></tr></thead><tbody>';
-  PROJECTS.forEach(p=>{const cats=docCats(p);const g=cats.reduce((a,c)=>a+c.items.filter(x=>x[1]).length,0);const tot=cats.reduce((a,c)=>a+c.items.length,0);
-    h+='<tr class="clk" onclick="openProj('+p.id+')"><td class="b">'+p.n+'</td><td class="muted">'+TOOS[p.too].nm.replace('ТОО ','')+'</td><td>Шаг '+p.s+' · '+STEPS[p.s-1][0]+'</td><td>'+g+'/'+tot+'</td><td>'+badge(p.st)+'</td><td><button class="btn sm" onclick="event.stopPropagation();openProj('+p.id+')">Открыть →</button></td></tr>';});
-  h+='</tbody></table></div>';
-  return h;
+function viewDocs(){let l=PROJECTS.slice();if(typeF!=='Все')l=l.filter(p=>p.g===typeF);
+  let h='<h1 class="pg">Документы по проектам</h1><div class="sub">Все проекты подряд. Документы — в общем Google Drive, один профиль. Скачивайте и загружайте сами.</div>'+driveBar();
+  h+='<div class="tabs">'+['Все','Маршрут','Гарантия','Сдача','Новые'].map(g=>'<button class="tab '+(typeF===g?'on':'')+'" onclick="setTF(\''+g+'\')">'+g+'</button>').join('')+'</div>';
+  h+='<div class="card"><table><thead><tr><th>Проект</th><th>ТОО</th><th>Шаг</th><th style="width:170px">Готовность документов</th><th></th></tr></thead><tbody>';
+  l.forEach(p=>{const cats=docCats(p);const g=cats.reduce((a,c)=>a+c.items.filter(x=>x[1]).length,0);const tot=cats.reduce((a,c)=>a+c.items.length,0);const pc=Math.round(g/tot*100);
+    h+='<tr class="clk" onclick="openProj('+p.id+')"><td class="b">'+p.n+'</td><td class="muted">'+TOOS[p.too].nm.replace('ТОО ','')+'</td><td>Шаг '+p.s+'</td><td><div class="row" style="gap:7px"><div class="pbar" style="flex:1;margin:0"><span style="width:'+pc+'%"></span></div><span class="muted" style="font-size:11px;white-space:nowrap">'+g+'/'+tot+'</span></div></td><td><button class="btn sm" onclick="event.stopPropagation();openProj('+p.id+')">Открыть →</button></td></tr>';});
+  h+='</tbody></table></div>';return h;
 }
 /* ===== СВЯЗЬ ОТДЕЛОВ ===== */
 const STEPDEPS=[["Земля","Учредитель/Собственник · Проектирование · GR"],["Проектирование","Проектирование (ЭП, ТУ, рабочий) · GR"],["Талон","GR — подача и получение"],["Стройка","Стройка / нач. участка · GR"],["Гарантии · ДДУ","Проектирование · Финансы · Юристы · Продажи · ОКС · GR"],["Сдача","GR · ГАСК → КСК / Atamura Comfort"]];
@@ -491,7 +499,9 @@ function renderNav(){document.getElementById('nav').innerHTML=NAV.map(n=>{let c=
   return '<button class="'+((view===n[0]||(view==='project'&&n[0]==='projects'))?'on':'')+'" onclick="go(\''+n[0]+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'+n[2]+'</svg>'+n[1]+c+'</button>';}).join('');}
 function renderUser(){const R=ROLES[ME.r];document.getElementById('sbUser').innerHTML='<div class="sb-av">'+ini(curName())+'</div><div style="flex:1;min-width:0"><div class="nm">'+curName().split(' — ')[0]+'</div><div class="rl">'+R.nm+'</div></div><button class="out" onclick="logout()">Выход</button>';}
 function ini(n){return (n||'').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
-function go(v){view=v;renderNav();render();window.scrollTo(0,0);}
+function toggleSb(){var a=document.getElementById('app');if(a)a.classList.toggle('sbopen');}
+function closeSb(){var a=document.getElementById('app');if(a)a.classList.remove('sbopen');}
+function go(v){view=v;closeSb();renderNav();render();window.scrollTo(0,0);}
 function crumb(){const m={home:'Главная',projects:'Проекты',docs:'Документы',deps:'Связь отделов',project:'Проекты / <b>'+P(curProj).n+'</b>'};return view==='project'?m.project:('<b>'+m[view]+'</b>');}
 function render(){document.getElementById('crumb').innerHTML=crumb();const f={home:viewHome,projects:viewProjects,project:viewProject,docs:viewDocs,deps:viewDeps}[view]||viewHome;document.getElementById('view').innerHTML=f();}
 /* ===== вход ===== */
