@@ -313,6 +313,21 @@ const MGMT=["coordinator","grhead","grexec","owner"];
 const TASKS=[];
 PROJECTS.forEach(p=>{ if(p.note && p.st!=='idle'){ TASKS.push({id:TASKS.length,projId:p.id,proj:p.n,name:p.note,exec:p.lead,who:leadRole(p.lead),dept:p.dept,st:p.st,step:p.s}); }});
 function myTasks(){ if(MGMT.includes(ME.r))return TASKS; return TASKS.filter(t=>t.who===ME.r); }
+/* ===== Постановка задач сотрудникам (руководители) ===== */
+const EMP=[["Сабина Асанова","coordinator"],["Гульнур Абишева","grhead"],["Руслан Ни","grexec"],["Искандер Шакиров","grmgr"],["Дана Жакупова","grmgr"],["Дмитрий Герасименко","design"],["Қымбат Тілеуғұлова","lawyer"],["Асем Байсеркенова","finance"],["Андрей (нач. участка)","design"],["Отдел продаж","sales"]];
+function canAssign(){return ['coordinator','grhead','grexec','owner'].includes(ME.r);}
+function deptByRole(r){return {design:'Проектирование',lawyer:'Юристы',finance:'Финансы',sales:'Продажи'}[r]||'GR';}
+function openNewTask(projId){if(!canAssign())return;
+  const psel='<select id="ntP" class="fld" style="width:100%">'+PROJECTS.map(p=>'<option value="'+p.id+'" '+(p.id===projId?'selected':'')+'>'+p.n+'</option>').join('')+'</select>';
+  const asel='<select id="ntA" class="fld" style="width:100%">'+EMP.map((e,i)=>'<option value="'+i+'">'+e[0]+' — '+ROLES[e[1]].nm+'</option>').join('')+'</select>';
+  const b='<div class="m-h"><div><div class="t">Новая задача сотруднику</div><div class="s">Упадёт исполнителю в «Мои задачи» и в уведомления</div></div><button class="x" onclick="cl(\'mbg\')">×</button></div><div class="m-b"><h4>Проект</h4>'+psel+'<h4>Исполнитель</h4>'+asel+'<h4>Что сделать</h4><textarea id="ntT" class="fld" style="width:100%;min-height:62px" placeholder="Опишите задачу…"></textarea><h4>Срок</h4><input id="ntD" class="fld" type="date" style="width:100%"><div class="row" style="margin-top:15px;justify-content:flex-end"><button class="btn" onclick="cl(\'mbg\')">Отмена</button><button class="btn pri" onclick="createTask()">Поставить задачу</button></div></div>';
+  document.getElementById('modal').innerHTML=b;document.getElementById('mbg').classList.add('open');}
+function createTask(){const pid=+document.getElementById('ntP').value;const e=EMP[+document.getElementById('ntA').value];const txt=(document.getElementById('ntT').value||'').trim();const due=document.getElementById('ntD').value||'';
+  if(!txt){document.getElementById('ntT').style.borderColor='var(--red)';return;}
+  const p=P(pid);const t={id:TASKS.length,projId:pid,proj:p.n,name:txt,exec:e[0],who:e[1],dept:deptByRole(e[1]),st:'prog',step:p.s,due:due,by:curName()};
+  TASKS.push(t);
+  pushN(e[1],e[0],'Новая задача от '+curName().split(' ')[0],'«'+txt+'» ('+p.n+')'+(due?' · срок '+due:'')+'. Поставлена вам.',p.n,t.id);
+  cl('mbg');render();}
 /* ===== Документы: хранилище + загрузка/скачивание ===== */
 const DOCSTORE={};
 function dkey(pid,cat){return pid+'|'+cat}
@@ -386,7 +401,7 @@ function viewHome(){const mt=myTasks();const mp=myProjects();
   let h='<div class="greet"><h1>Здравствуйте, '+curName().split(' ')[0]+'!</h1><p>'+dn+' · '+ROLES[ME.r].nm+'</p></div>';
   h+='<div class="kpis"><div class="kpi a"><div class="v">'+mt.length+'</div><div class="l">Мои задачи</div></div><div class="kpi"><div class="v">'+byp.length+'</div><div class="l">В работе</div></div><div class="kpi w"><div class="v">'+byw.length+'</div><div class="l">Ждём госорган</div></div><div class="kpi g"><div class="v">'+mp.length+'</div><div class="l">Мои проекты</div></div></div>';
   h+='<div class="card"><div class="card-h"><h2>Портфель по шагам маршрута</h2><span class="r">'+mp.length+' проектов</span></div><div class="card-b">'+stepDist(mp)+'</div></div>';
-  h+='<div class="card"><div class="card-h"><h2>Мои задачи</h2><span class="r">'+mt.length+'</span></div><div class="card-b" style="padding:8px 16px">';
+  h+='<div class="card"><div class="card-h"><h2>Мои задачи</h2><div class="row">'+(canAssign()?'<button class="btn pri sm" onclick="openNewTask()">+ Поставить задачу</button>':'')+'<span class="r">'+mt.length+'</span></div></div><div class="card-b" style="padding:8px 16px">';
   if(!mt.length)h+='<div class="muted" style="padding:8px 0">Активных задач нет.</div>';
   [['В работе',byp],['Ждём госорган',byw],['Не начато / прочее',byi]].forEach(g=>{if(!g[1].length)return;h+='<div class="th">'+g[0]+' · '+g[1].length+'</div>'+g[1].map(taskRow).join('');});
   h+='</div></div>';
@@ -421,7 +436,7 @@ const DEPNEXT={1:["Проектирование","посадка, ЭП, рабо
 function viewProject(){const p=P(curProj);const cats=docCats(p);const can=ME.r!=='sales';const dn=DEPNEXT[p.s];
   const dg=cats.reduce((a,c)=>a+c.items.filter(x=>x[1]).length,0),dt=cats.reduce((a,c)=>a+c.items.length,0);
   let h='<div class="row" style="justify-content:space-between;gap:10px;margin-bottom:10px"><div class="row" style="gap:12px;min-width:0">'+ring(p)+'<div style="min-width:0"><h1 class="pg" style="margin:0">'+p.n+'</h1><div class="muted" style="font-size:12px">'+TOOS[p.too].nm+' · 👤 '+p.lead+'</div></div></div><select class="fld" onchange="openProj(+this.value)">'+PROJECTS.map(x=>'<option value="'+x.id+'" '+(x.id===curProj?'selected':'')+'>'+x.n+'</option>').join('')+'</select></div>';
-  h+='<div class="row" style="margin-bottom:12px">'+badge(p.st)+'<span class="pill b">Шаг '+p.s+'/6 · '+STEPS[p.s-1][0]+'</span><span class="pill">'+p.g+'</span></div>';
+  h+='<div class="row" style="margin-bottom:12px">'+badge(p.st)+'<span class="pill b">Шаг '+p.s+'/6 · '+STEPS[p.s-1][0]+'</span><span class="pill">'+p.g+'</span>'+(canAssign()?'<button class="btn pri sm" onclick="openNewTask('+curProj+')">+ Задача</button>':'')+'</div>';
   if(p.note)h+='<div class="nextact"><div class="na-l">Следующее действие</div><div class="na-t">'+p.note+'</div><div class="na-m">Ответственный: <b>'+p.lead+'</b> · '+p.dept+'</div></div>';
   h+='<div class="card"><div class="card-h"><h2>Единый маршрут — 6 шагов</h2><span class="r">земля → техпаспорта</span></div><div class="card-b"><div class="flow">';
   STEPS.forEach((s,i)=>{const n=i+1;let c='mscard';if(n<p.s)c+=' done';else if(n===p.s)c+=(p.st==='wait'?' wait':' prog')+' cur';
@@ -473,7 +488,7 @@ function viewDeps(){let h='<h1 class="pg">Связь отделов</h1><div cla
 const TCOM={};const STC=['idle','prog','wait','done'];
 function openTask(id){const t=TASKS[id];const can=!ROLES[ME.r].ro||['owner'].includes(ME.r);const isResp=t.who===ME.r;const adv=(!ROLES[ME.r].ro)&&(isResp||MGMT.includes(ME.r))&&t.st!=='done';
   const appr=['owner','grhead','grexec','coordinator'].includes(ME.r);const coms=TCOM[id]||[];const att=ups(900+id,'task');
-  let b='<div class="m-h"><div><div class="t">'+t.name+'</div><div class="s">📁 '+t.proj+' · '+t.dept+' · 👤 '+t.exec+'</div></div><button class="x" onclick="cl(\'mbg\')">×</button></div><div class="m-b">';
+  let b='<div class="m-h"><div><div class="t">'+t.name+'</div><div class="s">📁 '+t.proj+' · '+t.dept+' · 👤 '+t.exec+(t.by?' · ✍ '+t.by:'')+'</div></div><button class="x" onclick="cl(\'mbg\')">×</button></div><div class="m-b">';
   b+='<div class="row">'+badge(t.st)+'<span class="pill">Шаг '+t.step+' · '+STEPS[t.step-1][0]+'</span>'+(adv?'<button class="btn pri sm" onclick="advTask('+id+')">Перевести статус →</button>':'')+'</div>';
   b+='<h4>Вложения ('+att.length+')</h4>'+(att.length?att.map(f=>'<div class="doc"><div class="nm">'+f.name+'</div><button class="btn sm" onclick="dlFile(\''+esc(f.name)+'\',\''+f.url+'\')">Скачать</button></div>').join(''):'<div class="hint">Документов пока нет.</div>');
   if(!ROLES[ME.r].ro)b+='<div style="margin-top:8px"><button class="btn" onclick="pickUpload('+(900+id)+',\'task\')">📎 Прикрепить документ</button></div>';
