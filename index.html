@@ -207,6 +207,9 @@ select,input.fld{font-family:var(--sans);font-size:12.5px;border:1px solid var(-
   </div>
 </div>
 <div class="mbg" id="mbg" onclick="if(event.target===this)cl('mbg')"><div class="modal" id="modal"></div></div>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script>window.firebaseConfig={apiKey:"AIzaSyBIFTGdujmfcNOpaT9s-sZJJs4XodC_rvs",authDomain:"gr-portal-b3ec7.firebaseapp.com",projectId:"gr-portal-b3ec7",storageBucket:"gr-portal-b3ec7.firebasestorage.app",messagingSenderId:"529349763402",appId:"1:529349763402:web:2150477cb077abed38e1b3"};</script>
 <script>
 /* ===== Роли и пользователи ===== */
 const ROLES={
@@ -312,9 +315,24 @@ const LEAD2ROLE={"Дима":"design","Гульнур":"grhead","Руслан":"g
 function leadRole(l){return LEAD2ROLE[l]||"grmgr"};
 const MGMT=["coordinator","grhead","grexec","owner"];
 /* ===== Задачи (из активных проектов) ===== */
-const TASKS=[];
-PROJECTS.forEach(p=>{ if(p.note && p.st!=='idle'){ TASKS.push({id:TASKS.length,projId:p.id,proj:p.n,name:p.note,exec:p.lead,who:leadRole(p.lead),dept:p.dept,st:p.st,step:p.s}); }});
+let TASKS=[];const SEED_TASKS=[];
+PROJECTS.forEach(p=>{ if(p.note && p.st!=='idle'){ SEED_TASKS.push({projId:p.id,proj:p.n,name:p.note,exec:p.lead,who:leadRole(p.lead),dept:p.dept,st:p.st,step:p.s}); }});
+TASKS=SEED_TASKS.slice();TASKS.forEach((t,i)=>t.id=i);
 function myTasks(){ if(MGMT.includes(ME.r))return TASKS; return TASKS.filter(t=>t.who===ME.r); }
+/* ===== Firebase: общая база реального времени ===== */
+var DB=null,FB_OK=false;const READ=new Set();var FS={tasks:[],notifs:[]};
+function rerender(){var a=document.getElementById('app');if(a&&a.style.display!=='none')render();}
+function rebuildTasks(){TASKS=SEED_TASKS.concat(FS.tasks);TASKS.forEach(function(t,i){t.id=i;});}
+function rebuildNotifs(){NOTIFS=SEED_NOTIFS.concat(FS.notifs);}
+function fbInit(){try{
+  if(!window.firebase||!window.firebaseConfig)return;
+  firebase.initializeApp(window.firebaseConfig);DB=firebase.firestore();FB_OK=true;
+  DB.collection('tasks').onSnapshot(function(s){FS.tasks=s.docs.map(function(d){var o=d.data();o.fid=d.id;return o;}).sort(function(a,b){return (a.cr||0)-(b.cr||0);});rebuildTasks();renderBell();rerender();},function(){});
+  DB.collection('notifs').onSnapshot(function(s){FS.notifs=s.docs.map(function(d){var o=d.data();o.id=d.id;return o;}).sort(function(a,b){return (b.cr||0)-(a.cr||0);});rebuildNotifs();renderBell();var dd=document.getElementById('ndd');if(dd&&dd.classList.contains('open'))renderNdd();},function(){});
+  DB.collection('pcom').onSnapshot(function(s){var m={};s.docs.map(function(d){return d.data();}).sort(function(a,b){return (a.cr||0)-(b.cr||0);}).forEach(function(x){(m[x.pid]=m[x.pid]||[]).push(x);});PCOM=m;if(view==='report'||view==='project')rerender();},function(){});
+  DB.collection('tcom').onSnapshot(function(s){var m={};s.docs.map(function(d){return d.data();}).sort(function(a,b){return (a.cr||0)-(b.cr||0);}).forEach(function(x){(m[x.key]=m[x.key]||[]).push(x);});TCOM=m;},function(){});
+  DB.collection('pstatus').onSnapshot(function(s){s.docs.forEach(function(d){var x=d.data();var pr=PROJECTS.find(function(p){return String(p.id)===d.id;});if(pr){if(x.st)pr.st=x.st;if(x.note!=null)pr.note=x.note;if(x.s)pr.s=x.s;}});rerender();},function(){});
+}catch(e){FB_OK=false;}}
 /* ===== Постановка задач сотрудникам (руководители) ===== */
 const EMP=[["Сабина Асанова","coordinator"],["Гульнур Абишева","grhead"],["Руслан Ни","grexec"],["Искандер Шакиров","grmgr"],["Дана Жакупова","grmgr"],["Дмитрий Герасименко","design"],["Қымбат Тілеуғұлова","lawyer"],["Асем Байсеркенова","finance"],["Андрей (нач. участка)","design"],["Отдел продаж","sales"]];
 function canAssign(){return ['coordinator','grhead','grexec','owner'].includes(ME.r);}
@@ -326,9 +344,9 @@ function openNewTask(projId){if(!canAssign())return;
   document.getElementById('modal').innerHTML=b;document.getElementById('mbg').classList.add('open');}
 function createTask(){const pid=+document.getElementById('ntP').value;const e=EMP[+document.getElementById('ntA').value];const txt=(document.getElementById('ntT').value||'').trim();const due=document.getElementById('ntD').value||'';
   if(!txt){document.getElementById('ntT').style.borderColor='var(--red)';return;}
-  const p=P(pid);const t={id:TASKS.length,projId:pid,proj:p.n,name:txt,exec:e[0],who:e[1],dept:deptByRole(e[1]),st:'prog',step:p.s,due:due,by:curName()};
-  TASKS.push(t);
-  pushN(e[1],e[0],'Новая задача от '+curName().split(' ')[0],'«'+txt+'» ('+p.n+')'+(due?' · срок '+due:'')+'. Поставлена вам.',p.n,t.id);
+  const p=P(pid);const data={projId:pid,proj:p.n,name:txt,exec:e[0],who:e[1],dept:deptByRole(e[1]),st:'prog',step:p.s,due:due,by:curName(),cr:Date.now()};
+  if(FB_OK){DB.collection('tasks').add(data).catch(function(){});}else{data.id=TASKS.length;TASKS.push(data);}
+  pushN(e[1],e[0],'Новая задача от '+curName().split(' ')[0],'«'+txt+'» ('+p.n+')'+(due?' · срок '+due:'')+'. Поставлена вам.',p.n,null);
   cl('mbg');render();}
 /* ===== Документы: хранилище + загрузка/скачивание ===== */
 const DOCSTORE={};
@@ -365,23 +383,24 @@ function docCats(p){return [
  {c:"Юр. справки и бухгалтерия",ic:"⚖",items:[["Справки (вытягивают юристы)",false],["Регистрация в ИС ЭСФ (бухгалтерия)",false],["Финотчётность и аудит (Ф-1…4)",dready(p,4)]]}
 ];}
 /* ===== Уведомления ===== */
-let NOTIFS=[
- {id:1,to:"design",t:"Загрузите документ",b:"Discovery — наружные сети и рабочий проект: загрузите пакет.",p:"Discovery",tm:"10:20",rd:false,task:null},
- {id:2,to:"finance",t:"Нужна смета/экспертиза",b:"Atakent (Карабулак): подтвердите смету для экспертизы.",p:"Atakent (Карабулак)",tm:"09:05",rd:false,task:null},
- {id:3,to:"coordinator",t:"Согласование",b:"Керуен 6 — пакет на КЖК (пилот старта продаж): нужно согласование.",p:"Керуен 6 очередь",tm:"вчера",rd:false,task:null},
- {id:4,to:"all",t:"Изменение статуса",b:"Бескайнар: ждём снятия обременения до 26.06.2026.",p:"Бескайнар",tm:"вчера",rd:true,task:null}
+const SEED_NOTIFS=[
+ {id:1,to:"design",t:"Загрузите документ",b:"Discovery — наружные сети и рабочий проект: загрузите пакет.",p:"Discovery",tm:"10:20"},
+ {id:2,to:"finance",t:"Нужна смета/экспертиза",b:"Atakent (Карабулак): подтвердите смету для экспертизы.",p:"Atakent (Карабулак)",tm:"09:05"},
+ {id:3,to:"coordinator",t:"Согласование",b:"Керуен 6 — пакет на КЖК (пилот старта продаж): нужно согласование.",p:"Керуен 6 очередь",tm:"вчера"},
+ {id:4,to:"all",t:"Изменение статуса",b:"Бескайнар: ждём снятия обременения до 26.06.2026.",p:"Бескайнар",tm:"вчера"}
 ];
+let NOTIFS=SEED_NOTIFS.slice();
 let NSEQ=0;
 function nFor(){return NOTIFS.filter(n=>n.to===ME.r||n.to==='all')}
-function unread(){return nFor().filter(n=>!n.rd).length}
+function unread(){return nFor().filter(function(n){return !READ.has(String(n.id))}).length}
 function renderBell(){const b=document.getElementById('bell');if(b)b.textContent=unread()}
-function pushN(to,nm,t,b,p,task){NSEQ++;NOTIFS.unshift({id:900+NSEQ,to:to||'all',t,b,p:p||'',tm:'сейчас',rd:false,task:task==null?null:task});renderBell();}
+function pushN(to,nm,t,b,p,task){if(FB_OK){DB.collection('notifs').add({to:to||'all',t:t,b:b,p:p||'',tm:'сейчас',cr:Date.now()}).catch(function(){});return;}NSEQ++;NOTIFS.unshift({id:'L'+NSEQ,to:to||'all',t:t,b:b,p:p||'',tm:'сейчас'});renderBell();}
 function toggleN(e){if(e)e.stopPropagation();const d=document.getElementById('ndd');if(!d)return;if(d.classList.contains('open')){d.classList.remove('open');return}renderNdd();d.classList.add('open');}
 function cl(id){const d=document.getElementById(id);if(d)d.classList.remove('open')}
 function renderNdd(){const d=document.getElementById('ndd');const l=nFor();
- d.innerHTML='<div class="ndd-h">Уведомления'+(unread()?' · '+unread()+' новых':'')+'<button onclick="event.stopPropagation();readAll()">Прочитать все</button></div>'+(l.length?l.map(n=>'<div class="ni '+(n.rd?'':'un')+'" onclick="event.stopPropagation();openN('+n.id+')"><b>'+n.t+'</b><p>'+n.b+'</p><span>'+(n.p?'📁 '+n.p+' · ':'')+n.tm+'</span></div>').join(''):'<div class="ni muted">Нет уведомлений</div>');}
-function openN(id){const n=NOTIFS.find(x=>x.id===id);if(!n)return;n.rd=true;cl('ndd');renderBell();if(n.task!=null)openTask(n.task);else if(n.p){const pr=PROJECTS.find(x=>x.n===n.p);if(pr)openProj(pr.id);}}
-function readAll(){nFor().forEach(n=>n.rd=true);renderBell();renderNdd();}
+ d.innerHTML='<div class="ndd-h">Уведомления'+(unread()?' · '+unread()+' новых':'')+'<button onclick="event.stopPropagation();readAll()">Прочитать все</button></div>'+(l.length?l.map(n=>'<div class="ni '+(READ.has(String(n.id))?'':'un')+'" onclick="event.stopPropagation();openN(\''+n.id+'\')"><b>'+n.t+'</b><p>'+n.b+'</p><span>'+(n.p?'📁 '+n.p+' · ':'')+n.tm+'</span></div>').join(''):'<div class="ni muted">Нет уведомлений</div>');}
+function openN(id){const n=NOTIFS.find(function(x){return String(x.id)===String(id)});if(!n)return;READ.add(String(id));cl('ndd');renderBell();if(n.p){const pr=PROJECTS.find(function(x){return x.n===n.p});if(pr)openProj(pr.id);}}
+function readAll(){nFor().forEach(function(n){READ.add(String(n.id))});renderBell();renderNdd();}
 /* ===== helpers ===== */
 const STM={prog:["В работе","b-prog"],wait:["Ждём","b-wait"],done:["Готово","b-done"],idle:["Не начато","b-idle"]};
 function badge(st){return '<span class="bdg '+STM[st][1]+'"><span class="d"></span>'+STM[st][0]+'</span>'}
@@ -487,9 +506,9 @@ function viewDeps(){let h='<h1 class="pg">Связь отделов</h1><div cla
   return h;
 }
 /* ===== ОКНО ЗАДАЧИ ===== */
-const TCOM={};const STC=['idle','prog','wait','done'];
+let TCOM={};const STC=['idle','prog','wait','done'];
 function openTask(id){const t=TASKS[id];const can=!ROLES[ME.r].ro||['owner'].includes(ME.r);const isResp=t.who===ME.r;const adv=(!ROLES[ME.r].ro)&&(isResp||MGMT.includes(ME.r))&&t.st!=='done';
-  const appr=['owner','grhead','grexec','coordinator'].includes(ME.r);const coms=TCOM[id]||[];const att=ups(900+id,'task');
+  const appr=['owner','grhead','grexec','coordinator'].includes(ME.r);const key=t.fid||('seed:'+id);const coms=TCOM[key]||[];const att=ups(900+id,'task');
   let b='<div class="m-h"><div><div class="t">'+t.name+'</div><div class="s">📁 '+t.proj+' · '+t.dept+' · 👤 '+t.exec+(t.by?' · ✍ '+t.by:'')+'</div></div><button class="x" onclick="cl(\'mbg\')">×</button></div><div class="m-b">';
   b+='<div class="row">'+badge(t.st)+'<span class="pill">Шаг '+t.step+' · '+STEPS[t.step-1][0]+'</span>'+(adv?'<button class="btn pri sm" onclick="advTask('+id+')">Перевести статус →</button>':'')+'</div>';
   b+='<h4>Вложения ('+att.length+')</h4>'+(att.length?att.map(f=>'<div class="doc"><div class="nm">'+f.name+'</div><button class="btn sm" onclick="dlFile(\''+esc(f.name)+'\',\''+f.url+'\')">Скачать</button></div>').join(''):'<div class="hint">Документов пока нет.</div>');
@@ -499,11 +518,12 @@ function openTask(id){const t=TASKS[id];const can=!ROLES[ME.r].ro||['owner'].inc
   if(!ROLES[ME.r].ro)b+='<div class="combox"><textarea id="tc" placeholder="Комментарий по статусу… (как в Битриксе)"></textarea><button class="btn pri" onclick="addCom('+id+')">Отправить</button></div>';
   b+='<div class="hint" style="margin-top:10px">📲 Уведомления о действиях падают ответственному ('+t.exec+') и в центр уведомлений 🔔.</div></div>';
   document.getElementById('modal').innerHTML=b;document.getElementById('mbg').classList.add('open');}
-function advTask(id){const t=TASKS[id];const i=STC.indexOf(t.st);if(i<0||i>=3)return;t.st=STC[i+1];const pr=PROJECTS.find(x=>x.id===t.projId);if(pr)pr.st=t.st;
-  pushN(t.who,t.exec,'Статус задачи: '+STM[t.st][0],'«'+t.name+'» ('+t.proj+'). '+(t.st==='done'?'Выполнено.':'Ваше действие: отпишитесь или приложите документ.'),t.proj,id);
+function advTask(id){const t=TASKS[id];const i=STC.indexOf(t.st);if(i<0||i>=3)return;const next=STC[i+1];t.st=next;const pr=PROJECTS.find(function(x){return x.id===t.projId});if(pr)pr.st=next;
+  if(FB_OK&&t.fid){DB.collection('tasks').doc(t.fid).update({st:next}).catch(function(){});DB.collection('pstatus').doc(String(t.projId)).set({st:next},{merge:true}).catch(function(){});}
+  pushN(t.who,t.exec,'Статус задачи: '+STM[next][0],'«'+t.name+'» ('+t.proj+'). '+(next==='done'?'Выполнено.':'Ваше действие: отпишитесь или приложите документ.'),t.proj,null);
   openTask(id);render();}
-function addCom(id){const e=document.getElementById('tc');if(!e)return;const v=(e.value||'').trim();if(!v)return;const me=curName().split(' ')[0];(TCOM[id]=TCOM[id]||[]).push({w:me,x:v,tm:'сейчас'});const t=TASKS[id];pushN(t.who,t.exec,'Новый комментарий',me+' по задаче «'+t.name+'».',t.proj,id);openTask(id);}
-function apprTask(id,ok){const t=TASKS[id];(TCOM[id]=TCOM[id]||[]).push({w:ROLES[ME.r].nm,x:ok?'✅ Согласовано':'❌ Отклонено — на доработку',tm:'сейчас'});pushN(t.who,t.exec,ok?'Согласовано':'Отклонено',ROLES[ME.r].nm+(ok?' согласовал(а) ':' отклонил(а) ')+'«'+t.name+'».',t.proj,id);openTask(id);}
+function addCom(id){const e=document.getElementById('tc');if(!e)return;const v=(e.value||'').trim();if(!v)return;const me=curName().split(' ')[0];const t=TASKS[id];const key=t.fid||('seed:'+id);if(FB_OK){DB.collection('tcom').add({key:key,w:me,x:v,tm:'сейчас',cr:Date.now()}).catch(function(){});}else{(TCOM[key]=TCOM[key]||[]).push({w:me,x:v,tm:'сейчас'});}pushN(t.who,t.exec,'Новый комментарий',me+' по задаче «'+t.name+'».',t.proj,null);openTask(id);}
+function apprTask(id,ok){const t=TASKS[id];const key=t.fid||('seed:'+id);const txt=ok?'✅ Согласовано':'❌ Отклонено — на доработку';if(FB_OK){DB.collection('tcom').add({key:key,w:ROLES[ME.r].nm,x:txt,tm:'сейчас',cr:Date.now()}).catch(function(){});}else{(TCOM[key]=TCOM[key]||[]).push({w:ROLES[ME.r].nm,x:txt,tm:'сейчас'});}pushN(t.who,t.exec,ok?'Согласовано':'Отклонено',ROLES[ME.r].nm+(ok?' согласовал(а) ':' отклонил(а) ')+'«'+t.name+'».',t.proj,null);openTask(id);}
 /* ===== поиск ===== */
 function searchP(q){const d=document.getElementById('sdd');q=(q||'').trim().toLowerCase();if(!q){d.classList.remove('open');return;}
   const r=PROJECTS.filter(p=>p.n.toLowerCase().includes(q)).slice(0,8);
@@ -512,10 +532,10 @@ function searchP(q){const d=document.getElementById('sdd');q=(q||'').trim().toLo
 /* ===== навигация / рендер ===== */
 let view='home';
 /* ===== Отчёт руководству + замечания → исполнителю ===== */
-const PCOM={};
+let PCOM={};
 function canLead(){return ['owner','ceo'].includes(ME.r);}
 function askLead(pid){if(!canLead())return;const v=prompt('Вопрос / замечание ответственному по проекту «'+P(pid).n+'»:');if(v&&v.trim())addLead(pid,v.trim());}
-function addLead(pid,v){const p=P(pid);(PCOM[pid]=PCOM[pid]||[]).push({who:curName(),x:v,tm:'сейчас'});
+function addLead(pid,v){const p=P(pid);if(FB_OK){DB.collection('pcom').add({pid:pid,who:curName(),x:v,tm:'сейчас',cr:Date.now()}).catch(function(){});}else{(PCOM[pid]=PCOM[pid]||[]).push({who:curName(),x:v,tm:'сейчас'});}
   pushN(leadRole(p.lead),p.lead,'Замечание руководства','«'+v+'» — '+p.n+' (от '+curName().split(' ')[0]+'). Учтите / ответьте.',p.n,null);
   render();}
 function leadBlock(pid){const c=PCOM[pid]||[];let h='<div class="card"><div class="card-h"><h2>💬 Замечания руководства (CEO / учредитель)</h2><span class="r">'+c.length+'</span></div><div class="card-b">';
@@ -549,7 +569,7 @@ function doLogin(){const l=(document.getElementById('lL').value||'').trim().toLo
   view='home';renderUser();renderNav();renderBell();render();}
 function logout(){document.getElementById('lP').value='';document.getElementById('app').style.display='none';document.getElementById('login').style.display='flex';}
 document.addEventListener('click',function(){cl('ndd');});
-(function(){var l=document.getElementById('lL');if(l&&!l.value)l.value='sabina';var p=document.getElementById('lP');if(p&&!p.value)p.value='atamura';})();
+(function(){var l=document.getElementById('lL');if(l&&!l.value)l.value='sabina';var p=document.getElementById('lP');if(p&&!p.value)p.value='atamura';fbInit();})();
 </script>
 </body>
 </html>
