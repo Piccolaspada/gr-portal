@@ -218,7 +218,8 @@ const ROLES={
   lawyer:{nm:"Юрист",ro:false,tag:"смежный отдел"},
   finance:{nm:"Финансы",ro:false,tag:"смежный отдел"},
   sales:{nm:"Отдел продаж",ro:true,tag:"только статус"},
-  owner:{nm:"Учредитель / Собственник",ro:true,tag:"просмотр · согласование"}
+  owner:{nm:"Учредитель / Собственник",ro:true,tag:"просмотр · согласование"},
+  ceo:{nm:"CEO",ro:true,tag:"просмотр · замечания"}
 };
 const USERS={
   sabina:{p:"atamura",r:"coordinator",f:"Сабина Асанова"},
@@ -230,7 +231,8 @@ const USERS={
   lawyer:{p:"atamura",r:"lawyer",f:"Қымбат Тілеуғұлова"},
   finance:{p:"atamura",r:"finance",f:"Асем Байсеркенова"},
   sales:{p:"atamura",r:"sales",f:"Отдел продаж"},
-  owner:{p:"atamura",r:"owner",f:"Данияр Аманов"}
+  owner:{p:"atamura",r:"owner",f:"Данияр Аманов"},
+  ceo:{p:"atamura",r:"ceo",f:"Олжас Койлышов (CEO)"}
 };
 let ME={r:"coordinator",f:"Сабина Асанова"};
 function curName(){return ME.f;}
@@ -450,7 +452,7 @@ function viewProject(){const p=P(curProj);const cats=docCats(p);const can=ME.r!=
     h+=u.map(f=>'<div class="doc"><svg class="ic" viewBox="0 0 24 24"><path fill="#1F7A43" d="M7.7 3.5l-5.2 9 2.6 4.5h10.4l-2.6-4.5z"/><path fill="#9A6A12" d="M16.3 3.5H7.7l5.2 9h8.6z"/></svg><div class="nm">'+f.name+'</div><span class="seen">загружено вами</span><button class="btn sm" onclick="dlFile(\''+esc(f.name)+'\',\''+f.url+'\')">Скачать</button></div>').join('');
     h+='</div>';});
   h+='</div></div>';
-  h+='<div class="card"><div class="card-h"><h2>План документов — когда получим · кому передаём</h2></div><div class="card-b">'+KEYDOCS.map(d=>{const ok=dready(p,d.s)||p.s>d.s;return '<div class="tl-row '+(ok?'ok':'')+'"><div class="tl-dot"></div><div class="tl-p">'+d.pr+'</div><div class="tl-l">'+d.l+'</div><div class="tl-to">Можно передать: <b>'+d.to+'</b> · '+(ok?'получено':'ожидается')+'</div></div>';}).join('')+'</div></div>';
+  h+='<div class="card"><div class="card-h"><h2>План документов — когда получим · кому передаём</h2></div><div class="card-b">'+KEYDOCS.map(d=>{const ok=dready(p,d.s)||p.s>d.s;return '<div class="tl-row '+(ok?'ok':'')+'"><div class="tl-dot"></div><div class="tl-p">'+d.pr+'</div><div class="tl-l">'+d.l+'</div><div class="tl-to">Можно передать: <b>'+d.to+'</b> · '+(ok?'получено':'ожидается')+'</div></div>';}).join('')+'</div></div>';h+=leadBlock(p.id);
   return h;
 }
 function docRow(pid,label,ok,can){return '<div class="doc"><svg class="ic" viewBox="0 0 24 24"><path fill="#1F7A43" d="M7.7 3.5l-5.2 9 2.6 4.5h10.4l-2.6-4.5z" opacity="'+(ok?1:.3)+'"/><path fill="#9A6A12" d="M16.3 3.5H7.7l5.2 9h8.6z" opacity="'+(ok?1:.3)+'"/></svg><div class="nm '+(ok?'':'off')+'">'+label+'</div><span class="seen">'+(ok?'получено':'ожидается')+'</span>'+(ok&&can?'<button class="btn sm" onclick="dlFile(\''+esc(label)+'.pdf\')">Скачать</button>':(can?'<button class="btn sm" onclick="pickUpload('+pid+',\'Документы\')">Загрузить</button>':''))+'</div>';}
@@ -509,16 +511,37 @@ function searchP(q){const d=document.getElementById('sdd');q=(q||'').trim().toLo
   d.classList.add('open');}
 /* ===== навигация / рендер ===== */
 let view='home';
-const NAV=[["home","Главная",'<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>'],["projects","Проекты",'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/>'],["docs","Документы",'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/>'],["deps","Связь отделов",'<circle cx="6.5" cy="7" r="2.5"/><circle cx="17.5" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.5 8.5l3 6M15.5 8.5l-3 6"/>']];
-function renderNav(){document.getElementById('nav').innerHTML=NAV.map(n=>{let c='';if(n[0]==='home'){const m=myTasks().length;if(m)c='<span class="cnt">'+m+'</span>';}
+/* ===== Отчёт руководству + замечания → исполнителю ===== */
+const PCOM={};
+function canLead(){return ['owner','ceo'].includes(ME.r);}
+function askLead(pid){if(!canLead())return;const v=prompt('Вопрос / замечание ответственному по проекту «'+P(pid).n+'»:');if(v&&v.trim())addLead(pid,v.trim());}
+function addLead(pid,v){const p=P(pid);(PCOM[pid]=PCOM[pid]||[]).push({who:curName(),x:v,tm:'сейчас'});
+  pushN(leadRole(p.lead),p.lead,'Замечание руководства','«'+v+'» — '+p.n+' (от '+curName().split(' ')[0]+'). Учтите / ответьте.',p.n,null);
+  render();}
+function leadBlock(pid){const c=PCOM[pid]||[];let h='<div class="card"><div class="card-h"><h2>💬 Замечания руководства (CEO / учредитель)</h2><span class="r">'+c.length+'</span></div><div class="card-b">';
+  h+=(c.length?'<div class="coms">'+c.map(x=>'<div class="com"><b>'+x.who+'</b> <span class="muted">· '+x.tm+'</span><div>'+x.x+'</div></div>').join('')+'</div>':'<div class="hint">Пока нет замечаний.</div>');
+  if(canLead())h+='<div style="margin-top:10px"><button class="btn pri sm" onclick="askLead('+pid+')">+ Оставить вопрос / замечание</button></div>';
+  h+='</div></div>';return h;}
+function viewReport(){const lead=canLead();
+  let h='<h1 class="pg">Отчёт руководству</h1><div class="sub">Статусы по всем проектам для CEO и учредителя.'+(lead?' Нажмите 💬, чтобы оставить вопрос или замечание — оно уйдёт уведомлением ответственному.':' Руководство видит статусы и оставляет замечания исполнителям (доходят уведомлением).')+'</div>';
+  h+='<div class="kpis"><div class="kpi a"><div class="v">'+PROJECTS.filter(p=>p.g==='Маршрут').length+'</div><div class="l">На маршруте</div></div><div class="kpi"><div class="v">'+PROJECTS.filter(p=>p.g==='Гарантия').length+'</div><div class="l">На гарантии</div></div><div class="kpi g"><div class="v">'+PROJECTS.filter(p=>p.g==='Сдача').length+'</div><div class="l">На сдаче</div></div><div class="kpi w"><div class="v">'+PROJECTS.filter(p=>p.st==='wait').length+'</div><div class="l">Ждём госорган</div></div></div>';
+  GROUPS.forEach(gr=>{const ps=PROJECTS.filter(p=>p.g===gr[0]);if(!ps.length)return;
+    h+='<div class="card"><div class="card-h"><h2>'+gr[0]+'</h2><span class="r">'+ps.length+' · '+gr[1]+'</span></div><table><thead><tr><th>Проект</th><th>Шаг</th><th>Статус</th><th>Ведёт</th><th>Текущее / след. действие</th><th>💬</th></tr></thead><tbody>';
+    ps.forEach(p=>{const c=(PCOM[p.id]||[]).length;
+      h+='<tr><td class="b" style="cursor:pointer" onclick="openProj('+p.id+')">'+p.n+'</td><td>Шаг '+p.s+'</td><td>'+badge(p.st)+'</td><td class="muted">'+p.lead+'</td><td style="font-size:12px">'+(p.note||'<span class="muted">—</span>')+'</td><td>'+(lead?'<button class="btn sm" onclick="askLead('+p.id+')">💬'+(c?' '+c:'')+'</button>':(c?'💬 '+c:''))+'</td></tr>';});
+    h+='</tbody></table></div>';});
+  return h;
+}
+const NAV=[["home","Главная",'<path d="M3 11l9-7 9 7v9a1 1 0 01-1 1h-5v-6H9v6H4a1 1 0 01-1-1z"/>'],["projects","Проекты",'<path d="M3 21V8l9-5 9 5v13"/><path d="M9 21v-7h6v7"/>'],["docs","Документы",'<path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/>'],["deps","Связь отделов",'<circle cx="6.5" cy="7" r="2.5"/><circle cx="17.5" cy="7" r="2.5"/><circle cx="12" cy="17" r="2.5"/><path d="M8.5 8.5l3 6M15.5 8.5l-3 6"/>'],["report","Отчёт руководству",'<path d="M4 4h16v16H4z"/><path d="M8 9h7M8 13h5" stroke-linecap="round"/><circle cx="16.5" cy="15.5" r="2.3"/>']];
+function renderNav(){document.getElementById('nav').innerHTML=NAV.filter(n=>n[0]!=='report'||['owner','ceo','coordinator','grhead','grexec'].includes(ME.r)).map(n=>{let c='';if(n[0]==='home'){const m=myTasks().length;if(m)c='<span class="cnt">'+m+'</span>';}
   return '<button class="'+((view===n[0]||(view==='project'&&n[0]==='projects'))?'on':'')+'" onclick="go(\''+n[0]+'\')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">'+n[2]+'</svg>'+n[1]+c+'</button>';}).join('');}
 function renderUser(){const R=ROLES[ME.r];document.getElementById('sbUser').innerHTML='<div class="sb-av">'+ini(curName())+'</div><div style="flex:1;min-width:0"><div class="nm">'+curName().split(' — ')[0]+'</div><div class="rl">'+R.nm+'</div></div><button class="out" onclick="logout()">Выход</button>';}
 function ini(n){return (n||'').split(/\s+/).slice(0,2).map(w=>w[0]||'').join('').toUpperCase();}
 function toggleSb(){var a=document.getElementById('app');if(a)a.classList.toggle('sbopen');}
 function closeSb(){var a=document.getElementById('app');if(a)a.classList.remove('sbopen');}
 function go(v){view=v;closeSb();renderNav();render();window.scrollTo(0,0);}
-function crumb(){const m={home:'Главная',projects:'Проекты',docs:'Документы',deps:'Связь отделов',project:'Проекты / <b>'+P(curProj).n+'</b>'};return view==='project'?m.project:('<b>'+m[view]+'</b>');}
-function render(){document.getElementById('crumb').innerHTML=crumb();const f={home:viewHome,projects:viewProjects,project:viewProject,docs:viewDocs,deps:viewDeps}[view]||viewHome;document.getElementById('view').innerHTML=f();}
+function crumb(){const m={home:'Главная',projects:'Проекты',docs:'Документы',deps:'Связь отделов',report:'Отчёт руководству',project:'Проекты / <b>'+P(curProj).n+'</b>'};return view==='project'?m.project:('<b>'+m[view]+'</b>');}
+function render(){document.getElementById('crumb').innerHTML=crumb();const f={home:viewHome,projects:viewProjects,project:viewProject,docs:viewDocs,deps:viewDeps,report:viewReport}[view]||viewHome;document.getElementById('view').innerHTML=f();}
 /* ===== вход ===== */
 function doLogin(){const l=(document.getElementById('lL').value||'').trim().toLowerCase();const p=document.getElementById('lP').value||'';const u=USERS[l];
   if(!u||u.p!==p){document.getElementById('lE').textContent='Неверный логин или пароль. Демо: sabina / atamura.';return;}
